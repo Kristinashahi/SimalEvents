@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { FaEdit, FaTrash, FaArrowLeft } from "react-icons/fa";
+import { getAuthData } from "../utils/auth-utils.js";
 
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);
@@ -11,7 +12,7 @@ const ManageUsers = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const { token } = getAuthData();
     if (!token) {
       navigate("/signin");
       return;
@@ -39,7 +40,7 @@ const ManageUsers = () => {
 
   const handleDelete = async (userId) => {
     if (window.confirm("Are you sure you want to delete this user?")) {
-      const token = localStorage.getItem("token");
+      const { token } = getAuthData();
       try {
         await axios.delete(`http://localhost:4000/admin/users/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -56,6 +57,7 @@ const ManageUsers = () => {
   if (error) return <div className="alert alert-danger mt-3">{error}</div>;
 
   return (
+    
     <div className="container-fluid mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>Manage Users</h2>

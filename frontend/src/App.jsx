@@ -1,7 +1,10 @@
 import React from "react";
+import { createRoot } from 'react-dom/client';
 import "./App.css";
+import "./styles/Services.css";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+import 'react-toastify/dist/ReactToastify.css';
 import { ThemeProvider } from 'react-bootstrap';
 import Navbar from "/components/Navbar.jsx";
 import Home from "./pages/Home.jsx";
@@ -18,18 +21,21 @@ import ManageUsers from "./pages/ManageUsers.jsx";
 import VendorRegistration from "./pages/VendorRegistration.jsx";
 import VendorDashboard from "./pages/VendorDashboard.jsx";
 import ManageVendor from "./pages/ManageVendor.jsx";
+import UserDashboard from "./pages/UserDashboard.jsx";
+import AddServices from "./pages/AddServices.jsx";
+import ManageAvailability from "./pages/ManageAvailibality.jsx";
+import ServiceDetails from "../components/ServiceDetails.jsx";
+import BookingForm from "../components/BookingForm.jsx";
 import "bootstrap/dist/css/bootstrap.min.css";
-
 
 const AppContent = () => {
   const location = useLocation(); 
 
   // Define paths where Navbar and Footer should NOT appear
-  const hideNavbarFooter = ["/signin", "/signup", "/admin-dashboard", "/manageusers", "/vendordashboard", "/managevendor"].includes(location.pathname);
+  const hideNavbarFooter = ["/signin", "/signup", "/admin-dashboard", "/manageusers", "/vendordashboard", "/managevendor", "/user-dashboard"].includes(location.pathname);
 
   return (
-    
-      <>
+    <>
       {!hideNavbarFooter && <Navbar />}
       <Toaster />
       <Routes>
@@ -42,6 +48,11 @@ const AppContent = () => {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/vendordashboard" element={<VendorDashboard/>}/>
         <Route path="/vendorRegister" element={<VendorRegistration/>}/>
+        <Route path="/add-service" element={<AddServices />} />
+        <Route path="/book/:serviceId" element={<BookingForm />} />
+        <Route path="/serviceDetails/:id" element={<ServiceDetails />} />
+        
+        {/* Protected Routes */}
         <Route 
           path="/admin-dashboard" 
           element={
@@ -50,16 +61,23 @@ const AppContent = () => {
             </ProtectedRoute>
           } 
         />
+        <Route 
+          path="/manage-availability" 
+          element={
+            <ProtectedRoute allowedRoles={["vendor"]}>
+              <ManageAvailability />
+            </ProtectedRoute>
+          } 
+        />
         <Route path="/manageusers" element={<ManageUsers/>}/>
         <Route path="/managevendor" element={<ManageVendor/>}/>
+        <Route path="/user-dashboard" element={<UserDashboard/>}/>
       </Routes>
       {!hideNavbarFooter && <Footer />}
-      </>
-    
+    </>
   );
 };
 
-// Main App component now just provides the Router context
 const App = () => {
   return (
     <Router>

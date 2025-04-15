@@ -15,6 +15,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  
   role: {
     type: String,
     enum: ["user", "vendor", "admin"],
@@ -37,10 +38,15 @@ const userSchema = new mongoose.Schema({
     type: String,
   },
   taxId: {
-    type: String,
+    type: String,// tax id 
   },
   serviceCategories: {
-    type: [String],
+    type: String,
+    enum: ["Venue", "Catering", "Decoration", "Photography", "Videography", 
+      "Sound System", "Lighting", "Entertainment", "Transportation", "Other"],
+      required: function() {
+        return this.role === 'vendor';
+       } // Only required for vendors
   },
   contactPerson: {
     type: String,
@@ -57,6 +63,10 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  services: [{ 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: "Service" 
+  }],
 });
 
 // Hash password before saving

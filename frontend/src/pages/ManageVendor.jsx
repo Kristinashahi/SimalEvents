@@ -3,6 +3,9 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { FaCheck, FaTimes, FaEye } from "react-icons/fa";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { getAuthData } from "../utils/auth-utils.js";
+
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
 
 const ManageVendor = () => {
   const [vendors, setVendors] = useState([]);
@@ -19,7 +22,7 @@ const ManageVendor = () => {
   }, []);
 
   const fetchVendors = async () => {
-    const token = localStorage.getItem("token");
+    const { token } = getAuthData();
     if (!token) {
       navigate("/signin");
       return;
@@ -43,7 +46,7 @@ const ManageVendor = () => {
   };
 
   const handleApprove = async (id) => {
-    const token = localStorage.getItem("token");
+    const { token } = getAuthData();
     try {
       await axios.put(`http://localhost:4000/admin/approve-vendor/${id}`, {}, {
         headers: { Authorization: `Bearer ${token}` },
@@ -58,7 +61,7 @@ const ManageVendor = () => {
   };
 
   const handleReject = async (id) => {
-    const token = localStorage.getItem("token");
+    const { token } = getAuthData();
     try {
       await axios.put(`http://localhost:4000/admin/reject-vendor/${id}`, {}, {
         headers: { Authorization: `Bearer ${token}` },
@@ -86,15 +89,7 @@ const ManageVendor = () => {
 
   return (
     <div className="d-flex">
-      {/* Sidebar - same as AdminDashboard */}
-      <div className="bg-dark text-white p-3 vh-100" style={{ width: "250px" }}>
-        <h3 className="text-center">Admin Panel</h3>
-        <ul className="nav flex-column">
-          <li className="nav-item py-2"><button className="btn btn-dark w-100" onClick={() => navigate("/admin-dashboard")}>Dashboard</button></li>
-          <li className="nav-item py-2"><button className="btn btn-dark w-100" onClick={() => navigate("/manageusers")}>Manage Users</button></li>
-          <li className="nav-item py-2"><button className="btn btn-dark w-100 active">Manage Vendors</button></li>
-        </ul>
-      </div>
+      
 
       {/* Main content */}
       <div className="container-fluid p-4">
@@ -227,7 +222,10 @@ const ManageVendor = () => {
                           ? "bg-danger" 
                           : "bg-warning"
                     }`}>{selectedVendor.vendorStatus}</span></p>
-                    <p><strong>Services:</strong> {selectedVendor.serviceCategories?.join(", ") || "N/A"}</p>
+                    <p><strong>Service Category:</strong> 
+                {selectedVendor.serviceCategory || selectedVendor.serviceCategories || "N/A"}
+              </p>
+                    
                     <p><strong>Registration Date:</strong> {new Date(selectedVendor.createdAt).toLocaleString()}</p>
                   </div>
                 </div>
@@ -238,12 +236,41 @@ const ManageVendor = () => {
                 </div>
                 
                 {selectedVendor.documentUrl && (
-                  <div className="mt-3">
-                    <h6>Business Documents</h6>
-                    <p>Document is available in the system.</p>
-                    {/* You could add a download/view link here if you implement document storage */}
+            <div className="mt-3">
+              <h6>Business Documents</h6>
+              <div className="document-preview">
+                {selectedVendor.documentUrl.endsWith('.pdf') ? (
+                  <div className="alert alert-info">
+                    <a 
+                      href={`${API_BASE_URL}/${selectedVendor.documentUrl}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-decoration-none"
+                    >
+                      View PDF Document
+                    </a>
                   </div>
+                ) : (
+                  <img 
+                    src={`${API_BASE_URL}/${selectedVendor.documentUrl}`} 
+                    alt="Business Document" 
+                    className="img-fluid rounded border"
+                    style={{ maxHeight: '300px' }}
+                  />
                 )}
+              </div>
+              <div className="mt-2">
+                <a 
+                  href={`${API_BASE_URL}/${selectedVendor.documentUrl}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="btn btn-sm btn-outline-primary"
+                >
+                  View Full Document
+                </a>
+              </div>
+            </div>
+          )}
               </div>
               <div className="modal-footer">
                 {selectedVendor.vendorStatus === "pending" && (

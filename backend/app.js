@@ -6,7 +6,13 @@ import cors from "cors";
 import authRoutes from "./router/Auth.js";
 import adminRoutes from "./router/admin.js";
 import vendorsRoutes from "./router/vendor.js";
-import userRoutes from "./router/user.js";
+import userRoutes from "./router/users.js";
+import serviceRoutes from "./router/Services.js";
+import cookieParser from "cookie-parser";
+import bookingRoutes from "./router/Bookings.js";
+
+
+
 //import vendorroutes from "./router/vendorroutes.js";
 //import vendorRoutes from "./router/vendorRoute.js";
 
@@ -38,10 +44,8 @@ app.use(cors({
 
 
 //middlewares 
-
-
-
 app.use(express.json());
+app.use(cookieParser()); // Enable cookie handling
 app.use(express.urlencoded({extended: true}));
 
 
@@ -50,15 +54,19 @@ app.use("/api/v1/message", messageRouter);
 app.use("/auth", authRoutes);
 app.use("/admin", adminRoutes);
 app.use("/vendor", vendorsRoutes);
-app.use("/user", userRoutes);
+app.use("/users", userRoutes);
 //app.use("/api/vendors", vendorRoutes);
 app.use('/uploads', express.static('uploads'));
+app.use("/api/services", serviceRoutes);
+app.use("/api/bookings", bookingRoutes);
+
 
 
 //Test routes
 app.get("/",(req,res)=>{
     res.send('test')
 })
+
 
 
 //Database Connection
