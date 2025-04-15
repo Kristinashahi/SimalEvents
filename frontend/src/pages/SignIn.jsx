@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import * as jwtDecode from "jwt-decode";
+import { storeAuthData } from "../utils/auth-utils.js"; // Import the utility functions
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
 
@@ -24,42 +25,60 @@ const SignIn = () => {
     try {
       const res = await axios.post(`${API_BASE_URL}/auth/login`, formData, { withCredentials: true });
       const token = res.data.token;
-      localStorage.setItem("token", token);
       
       try {
-        // Option 1: Try to decode the JWT token (if user info is stored in the token)
+        // Decode JWT token to get user role
         const decoded = jwtDecode.jwtDecode(token);
         console.log("Decoded token:", decoded);
         
-        // Check if role information is in the decoded token
+        // Get user role from token
         const userRole = decoded.role || "user";
         console.log("Role from token:", userRole);
         
-        setMessage("Login successful! Redirecting...");
-        setMessageType("info");
+        // Store auth data in cookie and session storage
+        storeAuthData(token, {
+          id: decoded.id,
+          name: decoded.name,
+          email: decoded.email,
+          role: userRole
+        });
         
+        setMessage(`Login successful! Redirecting to ${userRole} dashboard...`);
+        setMessageType("success");
+        
+        // Redirect based on role
         setTimeout(() => {
           switch(userRole) {
             case "admin":
               navigate("/admin-dashboard");
               break;
             case "vendor":
-              console.log("Redirecting to vendor dashboard");
-              navigate("/vendordashboard");
+              // Check if vendor is approved
+              if (decoded.status === "approved") {
+                navigate("/vendor-dashboard");
+              } else if (decoded.status === "pending") {
+                setMessage("Your vendor account is pending approval. You'll be redirected to the pending page.");
+                setMessageType("warning");
+                setTimeout(() => navigate("/vendor-pending"), 2000);
+              } else if (decoded.status === "rejected") {
+                setMessage("Your vendor application was rejected. You'll be redirected to the rejection page.");
+                setMessageType("danger");
+                setTimeout(() => navigate("/vendor-rejected"), 2000);
+              } else {
+                navigate("/vendordashboard");
+              }
               break;
             case "user":
-              console.log("Redirecting to user dashboard");
-              navigate("/");  // Redirect to home instead of /dashboard
+              navigate("/user-dashboard");
               break;
             default:
-              console.log("Redirecting to home page");
-              navigate("/");  // Redirect to home instead of /dashboard
+              navigate("/");
           }
-        }, 1000);
+        }, 1500);
       } catch (decodeError) {
         console.error("Error decoding token:", decodeError);
         
-        // Option 2: Make a separate API call to get user data
+        // Fallback: Make API call to get user data
         try {
           const userRes = await axios.get(`${API_BASE_URL}/auth/me`, {
             headers: {
@@ -67,28 +86,45 @@ const SignIn = () => {
             }
           });
           
-          const userRole = userRes.data.role || "user";
-          console.log("Role from API:", userRole);
+          const userData = userRes.data;
+          const userRole = userData.role || "user";
           
+          // Store user info
+          storeAuthData(token, {
+            id: userData._id,
+            name: userData.name,
+            email: userData.email,
+            role: userRole
+          });
+          
+          // Redirect based on role
           setTimeout(() => {
             switch(userRole) {
               case "admin":
                 navigate("/admin-dashboard");
                 break;
               case "vendor":
-                navigate("/vendordashboard");
+                if (userData.status === "approved") {
+                  navigate("/vendordashboard");
+                } else if (userData.status === "pending") {
+                  navigate("/vendor-pending");
+                } else if (userData.status === "rejected") {
+                  navigate("/vendor-rejected");
+                } else {
+                  navigate("/vendordashboard");
+                }
                 break;
               case "user":
-                navigate("/");  // Redirect to home instead of /dashboard
+                navigate("/user-dashboard");
                 break;
               default:
-                navigate("/");  // Redirect to home instead of /dashboard
+                navigate("/");
             }
-          }, 1000);
+          }, 1500);
         } catch (userError) {
           console.error("Error fetching user data:", userError);
-          // If all else fails, just go to home page
-          setTimeout(() => navigate("/"), 1000);
+          // If all else fails, go to home page
+          setTimeout(() => navigate("/"), 1500);
         }
       }
     } catch (error) {
@@ -139,9 +175,9 @@ const SignIn = () => {
           <button type="submit" className="btn btn-primary w-100">Sign In</button>
         </form>
         <p className="mt-3 text-center">
-          Don't have an account? <Link to="/signup">Register here</Link>
+          Don't have an account? <Link to="/signup">Register as Client</Link>
         </p>
-        <Link to="/vendorRegister" className="btn btn-outline-primary mt-3">
+        <Link to="/vendorRegister" className="btn btn-outline-primary mt-3 w-100">
           Register as Vendor
         </Link>
       </div>

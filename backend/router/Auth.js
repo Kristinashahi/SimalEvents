@@ -7,6 +7,8 @@ import multer from "multer";
 import path from "path";
 import { auth } from "../middleware/auth.js";
 import fs from "fs";
+import Booking from "../models/Booking.js";
+import Service from "../models/Services.js";
 
 const router = express.Router();
 const JWT_SECRET = "secret_key"; // Change this to a secure key
@@ -178,5 +180,74 @@ router.post("/register-vendor", auth, async (req, res) => {
   }
 });
 
+router.get("/vendor/profile", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user || user.role !== "vendor") {
+      return res.status(403).json({ msg: "Access denied" });
+    }
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+// Get user profile
+router.get("/profile", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+// Get user bookings
+router.get("/bookings", auth, async (req, res) => {
+  try {
+    const bookings = await Booking.find({ user: req.user.id })
+      .populate("service", "name price images")
+      .populate("vendor", "businessName")
+      .sort({ date: -1 });
+    res.json(bookings);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+
+
+// Change password
+router.post("/change-password", auth, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  try {
+    // Get user with password
+    const user = await User.findById(req.user.id);
+    
+    // Check current password
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ msg: "Current password is incorrect" });
+    }
+    
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    
+    await user.save();
+    
+    res.json({ msg: "Password updated successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
 
 export default router;

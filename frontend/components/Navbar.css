@@ -1,0 +1,112 @@
+nav {
+    background-color: rgba(0, 0, 0, 0.6); /* more transparent */
+    backdrop-filter: blur(8px); /* gives a glass-like effect */
+    color: #fff;
+    padding: 0.8rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+  }
+  
+  /* Logo */
+  .logo {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #f8f8f8;
+    letter-spacing: 1px;
+  }
+  
+  /* Nav links */
+  .navLinks {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    transition: all 0.3s ease-in-out;
+  }
+  
+  .nav-link {
+    color: #f0f0f0;
+    text-decoration: none;
+    font-size: 1rem;
+    transition: color 0.3s ease;
+  }
+  
+  .nav-link:hover {
+    color: #ffb347;
+  }
+  
+  /* Auth buttons */
+  .auth-buttons {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .signin-link,
+  .logout-btn {
+    background-color: transparent;
+    color: #f0f0f0;
+    border: 1px solid #fff;
+    padding: 0.4rem 0.8rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    font-size: 0.95rem;
+  }
+  
+  .signin-link:hover,
+  .logout-btn:hover {
+    background-color: #ffb347;
+    color: #000;
+    text-decoration: none;
+  }
+  
+  /* User Profile */
+  .user-profile {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    gap: 0.5rem;
+    font-size: 1rem;
+    color: #fff;
+  }
+  
+  .user-profile i {
+    font-size: 1.2rem;
+  }
+  
+  /* Hamburger Menu */
+  .hamburger {
+    display: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #fff;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .navLinks {
+      position: absolute;
+      top: 70px;
+      left: 0;
+      right: 0;
+      background-color: rgba(0, 0, 0, 0.95);
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.5rem 0;
+      display: none;
+    }
+  
+    .navLinks.showmenu {
+      display: flex;
+    }
+  
+    .hamburger {
+      display: block;
+    }
+  }
+  

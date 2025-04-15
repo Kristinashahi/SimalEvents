@@ -1,0 +1,53 @@
+/* UserDashboard.css */
+.dashboard-container {
+    margin-top: 3rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  .card {
+    border-radius: 1rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+  }
+  
+  .card:hover {
+    transform: translateY(-5px);
+  }
+  
+  .card-header {
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
+  }
+  
+  .profile-section .bg-light {
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    background-color: #f8f9fa;
+  }
+  
+  .btn {
+    border-radius: 0.5rem;
+  }
+  
+  .list-group .btn {
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+  
+  .list-group .btn:hover {
+    transform: scale(1.02);
+  }
+  
+  .table {
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
+  
+  .table th, .table td {
+    vertical-align: middle;
+  }
+  
+  .alert {
+    border-radius: 0.5rem;
+  }
+  

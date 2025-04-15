@@ -1,0 +1,163 @@
+/* Hero Slider Styles */
+.body{
+  background-color: FAEAB1;
+
+}
+.hero {
+  position: relative;
+  height: 80vh;
+  overflow: hidden;
+}
+
+.slider {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.slide.active {
+  opacity: 1;
+}
+
+.slide-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Add a semi-transparent overlay for better text visibility */
+.slide::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1;
+}
+
+.slide-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: white;
+  width: 80%;
+  max-width: 800px;
+  z-index: 2;
+}
+
+.slide-content h3 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.slide-content h1 {
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+}
+
+.slide-content p {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+}
+
+.btn-slide {
+  display: inline-block;
+  padding: 12px 30px;
+  background: #0a2342;
+  color: white;
+  text-decoration: none;
+  border-radius: 30px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.btn-slide:hover {
+  background: #0a2342;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Slider navigation dots */
+.slider-nav {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 2;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  background: white;
+  opacity: 0.5;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+
+.dot.active {
+  opacity: 1;
+}
+
+/* Services section */
+.services {
+  padding: 4rem 0;
+  text-align: center;
+}
+
+.services h2 {
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+}
+
+.banner {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  padding: 0 1rem;
+}
+
+.item {
+  background: #f8f9fa;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.item:hover {
+  transform: translateY(-5px);
+}
+
+.item img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.item h3 {
+  padding: 1rem;
+  font-size: 1.5rem;
+  color: #333;
+}

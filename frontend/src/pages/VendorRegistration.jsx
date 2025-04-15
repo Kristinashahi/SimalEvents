@@ -2,17 +2,19 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
+
 const VendorRegistration = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    name: "", // Changed from businessName to name to match backend expectation
-    businessName:"",
+    name: "",
+    businessName: "",
     address: "",
     phoneNumber: "",
     description: "",
     website: "",
     taxId: "",
-    serviceCategories: [],
+    serviceCategory: "",
     email: "",
     contactPerson: "",
     password: "",
@@ -25,7 +27,6 @@ const VendorRegistration = () => {
   const [success, setSuccess] = useState(false);
   const [passwordError, setPasswordError] = useState("");
 
-  // Available service categories
   const availableCategories = [
     "Venue",
     "Catering",
@@ -41,25 +42,8 @@ const VendorRegistration = () => {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    
-    // Clear password error when user types in password fields
     if (e.target.name === "password" || e.target.name === "confirmPassword") {
       setPasswordError("");
-    }
-  };
-
-  const handleCategoryChange = (e) => {
-    const { value, checked } = e.target;
-    if (checked) {
-      setFormData({
-        ...formData,
-        serviceCategories: [...formData.serviceCategories, value]
-      });
-    } else {
-      setFormData({
-        ...formData,
-        serviceCategories: formData.serviceCategories.filter(cat => cat !== value)
-      });
     }
   };
 
@@ -73,7 +57,6 @@ const VendorRegistration = () => {
     setError("");
     setPasswordError("");
     
-    // Validate passwords
     if (formData.password !== formData.confirmPassword) {
       setPasswordError("Passwords do not match");
       setLoading(false);
@@ -86,72 +69,71 @@ const VendorRegistration = () => {
       return;
     }
 
+    if (!formData.serviceCategory) {
+      setError("Please select a service category");
+      setLoading(false);
+      return;
+    }
+
     try {
-        // Create FormData object to handle file upload
-        const data = new FormData();
-        
-        // Add all form fields to FormData
-        Object.keys(formData).forEach(key => {
-          if (key === "serviceCategories") {
-            // Handle array data
-            if (formData[key].length > 0) {
-              // Convert array to JSON string to ensure the server can parse it correctly
-              data.append("serviceCategories", JSON.stringify(formData[key]));
-            } else {
-              // Ensure at least one category is selected
-              setError("Please select at least one service category");
-              setLoading(false);
-              return;
-            }
-          } else if (key !== "confirmPassword") { // Don't send confirmPassword to the server
-            data.append(key, formData[key]);
-          }
-        });
-        
-        // Add document if available
-        if (documents) {
-          data.append("document", documents);
-        } else {
-          setError("Please upload a business document");
-          setLoading(false);
-          return;
-        }
-        
-        // Log what we're sending (for debugging)
-        console.log("Submitting data:", Object.fromEntries(data));
-        
-        // Submit vendor registration to the regular register endpoint
-        const response = await axios.post("http://localhost:4000/auth/register", data, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
+      const data = new FormData();
       
-        // Save the token
-        localStorage.setItem("token", response.data.token);
-        
-        setSuccess(true);
-        setLoading(false);
-        
-        // Redirect after 3 seconds
-        setTimeout(() => {
-          navigate("/signin");
-        }, 5000);
-      } catch (err) {
-        setLoading(false);
-        
-        // Show detailed error information
-        if (err.response) {
-          console.error("Server response error:", err.response.data);
-          setError(err.response.data.msg || (err.response.data.errors ? err.response.data.errors[0].msg : JSON.stringify(err.response.data)) || "Server error");
-        } else if (err.request) {
-          console.error("No response received:", err.request);
-          setError("No response from server. Please check your connection.");
-        } else {
-          console.error("Request setup error:", err.message);
-          setError(err.message || "Error preparing your request");
+      
+      const submissionData = {
+        ...formData,
+        serviceCategories: [formData.serviceCategory] // Convert to array
+      };
+  
+      // Add all fields to FormData
+      Object.keys(submissionData).forEach(key => {
+        if (key !== "confirmPassword") {
+          if (key === "serviceCategories") {
+            // Send as array, not stringified
+            submissionData[key].forEach(item => data.append(key, item));
+          } else {
+            data.append(key, submissionData[key]);
+          }
         }
+      });
+  
+      
+      if (documents) {
+        data.append("document", documents);
+      } else {
+        setError("Please upload a business document");
+        setLoading(false);
+        return;
       }
+      
+      const response = await axios.post(`${API_BASE_URL}/auth/register`, data, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+    
+      localStorage.setItem("token", response.data.token);
+      setSuccess(true);
+      setLoading(false);
+      
+      setTimeout(() => {
+        navigate("/signin");
+      }, 3000);
+    } catch (err) {
+      setLoading(false);
+      
+      if (err.response) {
+        console.error("Server response error:", err.response.data);
+        setError(err.response.data.msg || 
+                (err.response.data.errors ? err.response.data.errors[0].msg : 
+                JSON.stringify(err.response.data)) || "Server error");
+      } else if (err.request) {
+        console.error("No response received:", err.request);
+        setError("No response from server. Please check your connection.");
+      } else {
+        console.error("Request setup error:", err.message);
+        setError(err.message || "Error preparing your request");
+      }
+    }
   };
 
   if (success) {
@@ -183,6 +165,7 @@ const VendorRegistration = () => {
               {error && <div className="alert alert-danger">{error}</div>}
               
               <form onSubmit={handleSubmit}>
+                {/* Business Information Section */}
                 <div className="mb-4">
                   <h5 className="border-bottom pb-2 text-primary">Business Information</h5>
                   
@@ -279,6 +262,7 @@ const VendorRegistration = () => {
                   </div>
                 </div>
 
+                {/* Services Information Section */}
                 <div className="mb-4">
                   <h5 className="border-bottom pb-2 text-primary">Services Information</h5>
                   
@@ -296,32 +280,23 @@ const VendorRegistration = () => {
                   </div>
 
                   <div className="mb-3">
-                    <label className="form-label fw-bold">Service Categories</label>
-                    <div className="row">
+                    <label className="form-label fw-bold">Primary Service Category*</label>
+                    <select
+                      name="serviceCategory"
+                      className="form-select"
+                      value={formData.serviceCategory}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="">Select your main service</option>
                       {availableCategories.map(category => (
-                        <div className="col-md-4 mb-2" key={category}>
-                          <div className="form-check">
-                            <input
-                              type="checkbox"
-                              className="form-check-input"
-                              id={`category-${category}`}
-                              value={category}
-                              checked={formData.serviceCategories.includes(category)}
-                              onChange={handleCategoryChange}
-                            />
-                            <label className="form-check-label" htmlFor={`category-${category}`}>
-                              {category}
-                            </label>
-                          </div>
-                        </div>
+                        <option key={category} value={category}>{category}</option>
                       ))}
-                    </div>
-                    {formData.serviceCategories.length === 0 && (
-                      <small className="text-danger">Please select at least one service category</small>
-                    )}
+                    </select>
                   </div>
                 </div>
 
+                {/* Account Information Section */}
                 <div className="mb-4">
                   <h5 className="border-bottom pb-2 text-primary">Account Information</h5>
                   
@@ -354,6 +329,7 @@ const VendorRegistration = () => {
                   {passwordError && <div className="text-danger mb-3">{passwordError}</div>}
                 </div>
 
+                {/* Verification Section */}
                 <div className="mb-4">
                   <h5 className="border-bottom pb-2 text-primary">Verification</h5>
                   
@@ -375,6 +351,7 @@ const VendorRegistration = () => {
                   </div>
                 </div>
 
+                {/* Terms Agreement */}
                 <div className="mb-3 form-check">
                   <input type="checkbox" className="form-check-input" id="agreementCheck" required />
                   <label className="form-check-label" htmlFor="agreementCheck">
@@ -382,11 +359,12 @@ const VendorRegistration = () => {
                   </label>
                 </div>
 
+                {/* Submit Button */}
                 <div className="d-grid gap-2">
                   <button 
                     className="btn btn-primary py-2" 
                     type="submit" 
-                    disabled={loading || formData.serviceCategories.length === 0}
+                    disabled={loading || !formData.serviceCategory}
                   >
                     {loading ? (
                       <>
