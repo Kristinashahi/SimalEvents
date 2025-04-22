@@ -1,0 +1,292 @@
+/* Base Styles */
+:root {
+  --navy: #001f3f;
+  --gold: #b7791f;
+  --white: #ffffff;
+  --light-gray: #f8f9fa;
+  --dark-gray: #2d3748;
+}
+
+.login-page-container {
+  display: flex;
+  min-height: 100vh;
+  
+}
+
+/* Image Section */
+.login-image-container {
+  flex: 1;
+  position: relative;
+  background-color: var(--navy);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.login-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.8;
+}
+
+.image-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 2rem;
+  color: var(--white);
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+  text-align: center;
+}
+
+.image-overlay h2 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: var(--gold);
+}
+
+.image-overlay p {
+  font-size: 1rem;
+  opacity: 0.9;
+  margin-bottom: 400px;
+}
+
+/* Form Section */
+.signin-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #fff5f5;
+  padding: 2rem;
+}
+.password-container {
+  position: relative;
+}
+
+/* Wrapper for input and toggle button */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Style the input to accommodate the toggle button */
+.password-input {
+  padding-right: 40px; /* Space for the toggle button */
+  width: 100%;
+}
+
+/* Style the toggle button */
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px; /* Adjust icon size */
+}
+
+/* Optional: Hover effect for toggle button */
+.password-toggle:hover {
+  color: #333;
+}
+
+/* Ensure focus state is accessible */
+.password-toggle:focus {
+  outline: none;
+  color: #000;
+}
+
+.signin-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 2rem;
+  border-radius: 8px;
+}
+
+.signin-title {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: var(--navy);
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+/* Form Elements */
+.signin-form {
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--navy);
+  font-weight: 500;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: all 0.3s;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+
+/* Buttons */
+.primary-button {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: var(--navy);
+  color: var(--white);
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.primary-button:hover {
+  background-color: #002a52;
+  transform: translateY(-1px);
+}
+
+.secondary-button {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: var(--white);
+  color: var(--navy);
+  border: 1px solid var(--navy);
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 1rem;
+  text-align: center;
+  text-decoration: none;
+  display: block;
+}
+
+.secondary-button:hover {
+  background-color: var(--light-gray);
+  transform: translateY(-1px);
+}
+
+/* Links */
+.forgot-password-link-container {
+  text-align: right;
+  margin-top: 0.5rem;
+}
+
+.forgot-password-link {
+  background: none;
+  border: none;
+  color: var(--navy);
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.forgot-password-link:hover {
+  color: var(--gold);
+}
+
+.text-link {
+  color: var(--navy);
+  font-weight: 500;
+  text-decoration: underline;
+}
+
+.text-link:hover {
+  color: var(--gold);
+}
+
+/* Message Styles */
+.signin-message {
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-weight: 500;
+}
+
+.signin-message-success {
+  background-color: #f0fff4;
+  color: #2f855a;
+  border: 1px solid #c6f6d5;
+}
+
+.signin-message-danger {
+  background-color: #fff5f5;
+  color: #c53030;
+  border: 1px solid #fed7d7;
+}
+
+.signin-message-warning {
+  background-color: #fffaf0;
+  color: #b7791f;
+  border: 1px solid #feebc8;
+}
+
+.signin-message-info {
+  background-color: #ebf8ff;
+  color: #2b6cb0;
+  border: 1px solid #bee3f8;
+}
+
+/* Forgot Password Form */
+.forgot-password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.forgot-password-title {
+  text-align: center;
+  margin-bottom: 0.5rem;
+  color: var(--navy);
+  font-size: 1.25rem;
+}
+
+.signin-footer {
+  text-align: center;
+  margin-top: 1rem;
+  color: var(--dark-gray);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .login-page-container {
+    flex-direction: column;
+  }
+  
+  .login-image-container {
+    display: none;
+  }
+  
+  .signin-container {
+    padding: 1rem;
+  }
+}

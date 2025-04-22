@@ -2,6 +2,7 @@ import express from "express";
 import User from "../models/user.js";
 import Service from "../models/Services.js";
 import {auth} from "../middleware/auth.js";
+import Booking from "../models/Booking.js";
 
 const router = express.Router();
 
@@ -116,26 +117,25 @@ router.get("/vendors", auth, async (req, res) => {
 
 // Approve a vendor application
 router.put("/approve-vendor/:id", auth, async (req, res) => {
-  // Check if user is admin
   if (req.user.role !== "admin") {
     return res.status(403).json({ msg: "Not authorized as admin" });
   }
 
   try {
-    // Find and update the vendor status
-    const vendor = await User.findById(req.params.id);
-    
-    if (!vendor) {
+    const user = await User.findById(req.params.id);
+    if (!user || user.role !== "vendor") {
       return res.status(404).json({ msg: "Vendor not found" });
     }
+
+    user.vendorStatus = "approved";
+    // Do not set khaltiMerchantId; let vendor add it later
+    await user.save();
+
     
-    vendor.vendorStatus = "approved";
-    await vendor.save();
-    
-    res.json({ msg: "Vendor approved successfully", vendor });
+    res.json({ msg: "Vendor approved successfully", user });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ msg: "Server error" });
+    res.status(500).json({ msg: "Server error: " + err.message });
   }
 });
 
@@ -216,6 +216,25 @@ router.get("/growth-stats", auth, async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 });
+router.get("/payments", auth, async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ msg: "Not authorized as admin" });
+  }
+
+  try {
+    const bookings = await Booking.find({ "payment.status": "completed" });
+    const totalPayments = bookings.reduce((sum, b) => sum + b.totalPrice, 0);
+    const totalCommissions = bookings.reduce((sum, b) => sum + (b.commission || 0), 0);
+
+    res.json({
+      totalPayments,
+      totalCommissions,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
 
 // Get top services
 router.get("/top-services", auth, async (req, res) => {
@@ -225,29 +244,34 @@ router.get("/top-services", auth, async (req, res) => {
 
   try {
     const topServices = await Service.aggregate([
-      { $sort: { popularity: -1 } }, 
+      { $sort: { bookings: -1 } }, // Sort by bookings instead of popularity
       { $limit: 5 },
-      { $lookup: {
-          from: "users",
+      {
+        $lookup: {
+          from: "User", // Update to match the actual collection name (likely "User")
           localField: "vendor",
           foreignField: "_id",
           as: "vendorDetails"
-      }},
+        }
+      },
       { $unwind: "$vendorDetails" },
-      { $project: {
+      {
+        $project: {
           name: 1,
           price: 1,
           category: 1,
           bookings: 1,
           vendorName: "$vendorDetails.name",
           createdAt: 1
-      }}
+        }
+      }
     ]);
-    
+
+    console.log("Top services:", topServices); // Log for debugging
     res.json(topServices);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ msg: "Server error" });
+    console.error("Error in top-services:", err);
+ res.status(500).json({ msg: "Server error" });
   }
 });
 

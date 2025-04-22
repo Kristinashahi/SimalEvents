@@ -15,7 +15,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  
   role: {
     type: String,
     enum: ["user", "vendor", "admin"],
@@ -38,15 +37,13 @@ const userSchema = new mongoose.Schema({
     type: String,
   },
   taxId: {
-    type: String,// tax id 
+    type: String,
   },
   serviceCategories: {
-    type: String,
+    type: [String], // Changed to array
     enum: ["Venue", "Catering", "Decoration", "Photography", "Videography", 
       "Sound System", "Lighting", "Entertainment", "Transportation", "Other"],
-      required: function() {
-        return this.role === 'vendor';
-       } // Only required for vendors
+    required: function() { return this.role === "vendor"; },
   },
   contactPerson: {
     type: String,
@@ -59,6 +56,9 @@ const userSchema = new mongoose.Schema({
     enum: ["pending", "approved", "rejected"],
     default: "pending",
   },
+  khaltiMerchantId: {
+    type: String, // Optional for vendors
+  },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -70,13 +70,15 @@ const userSchema = new mongoose.Schema({
 });
 
 // Hash password before saving
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) {
-    return next();
+userSchema.pre("save", async function(next) {
+  if (!this.isModified("password")) return next();
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (err) {
+    next(err);
   }
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-  next();
 });
 
 // Method to compare passwords

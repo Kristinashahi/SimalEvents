@@ -14,10 +14,12 @@ import Services from "/components/Services.jsx";
 import Footer from "/components/Footer.jsx";
 import SignIn from "./pages/SignIn.jsx";
 import SignUp from "./pages/SignUp.jsx";
+import ResetPassword from "./pages/ResetPassword.jsx";
 import About from "./pages/About.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import ProtectedRoute from "/components/ProtectedRoute.jsx";
 import ManageUsers from "./pages/ManageUsers.jsx";
+import ManageServices from "./pages/ManageServices.jsx";
 import VendorRegistration from "./pages/VendorRegistration.jsx";
 import VendorDashboard from "./pages/VendorDashboard.jsx";
 import ManageVendor from "./pages/ManageVendor.jsx";
@@ -26,7 +28,9 @@ import AddServices from "./pages/AddServices.jsx";
 import ManageAvailability from "./pages/ManageAvailibality.jsx";
 import ServiceDetails from "../components/ServiceDetails.jsx";
 import BookingForm from "../components/BookingForm.jsx";
+import TopServicesTable from "./pages/TopServicesTable.jsx";
 import "bootstrap/dist/css/bootstrap.min.css";
+
 
 const AppContent = () => {
   const location = useLocation(); 
@@ -51,6 +55,8 @@ const AppContent = () => {
         <Route path="/add-service" element={<AddServices />} />
         <Route path="/book/:serviceId" element={<BookingForm />} />
         <Route path="/serviceDetails/:id" element={<ServiceDetails />} />
+        <Route path="/TopServicesTable" element={<TopServicesTable />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         
         {/* Protected Routes */}
         <Route 
@@ -71,6 +77,7 @@ const AppContent = () => {
         />
         <Route path="/manageusers" element={<ManageUsers/>}/>
         <Route path="/managevendor" element={<ManageVendor/>}/>
+        <Route path="/manageservices" element={<ManageServices/>}/>
         <Route path="/user-dashboard" element={<UserDashboard/>}/>
       </Routes>
       {!hideNavbarFooter && <Footer />}

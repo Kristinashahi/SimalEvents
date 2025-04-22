@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { getAuthData, clearAuthData } from "../utils/auth-utils.js";
-import { FaUsers, FaStore, FaBoxOpen, FaExclamationTriangle } from "react-icons/fa";
+import { FaUsers, FaStore, FaBoxOpen, FaExclamationTriangle, FaDollarSign  } from "react-icons/fa";
 import GrowthChart from './GrowthChart.jsx';
 import TopServicesTable from './TopServicesTable.jsx';
 
@@ -30,11 +30,17 @@ const AdminDashboard = () => {
 
   const fetchAdminData = async (token) => {
     try {
-      const response = await axios.get("http://localhost:4000/admin/admin-dashboard", 
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      console.log("Backend response:", response.data);
-      setData(response.data);
+      const response = await axios.get("http://localhost:4000/admin/admin-dashboard", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const paymentResponse = await axios.get("http://localhost:4000/admin/payments", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setData({
+        ...response.data,
+        totalPayments: paymentResponse.data.totalPayments,
+        totalCommissions: paymentResponse.data.totalCommissions,
+      });
       setLoading(false);
     } catch (error) {
       setError("Failed to load dashboard data. " + (error.response?.data?.msg || error.message));
@@ -92,6 +98,14 @@ const AdminDashboard = () => {
             )}
           </button>
         </li>
+        <li className="nav-item py-2">
+          <button 
+            className="btn btn-dark w-100" 
+            onClick={() => navigate("/manageservices")}
+          >
+            Manage Services
+          </button>
+        </li>
         
       </ul>
     </div>
@@ -143,6 +157,24 @@ const AdminDashboard = () => {
               </div>
             </div>
           </div>
+          <div className="col-md-4">
+              <div className="card text-white bg-info mb-3">
+                <div className="card-body text-center">
+                  <FaDollarSign size={40} />
+                  <h5 className="card-title mt-2">Total Payments</h5>
+                  <p className="fs-3">NPR {data.totalPayments || 0}</p>
+                </div>
+              </div>
+            </div>
+            <div className="col-md-4">
+              <div className="card text-white bg-secondary mb-3">
+                <div className="card-body text-center">
+                  <FaDollarSign size={40} />
+                  <h5 className="card-title mt-2">Total Commissions</h5>
+                  <p className="fs-3">NPR {data.totalCommissions || 0}</p>
+                </div>
+              </div>
+            </div>
         </div>
         
         <div className="row mt-4">

@@ -1,18 +1,47 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
+
+const menuItemSchema = new mongoose.Schema({
+  name: String,
+  category: String,
+  type: String,
+  price: Number,
+  description: String
+});
+
+const menuSectionSchema = new mongoose.Schema({
+  name: String,
+  items: [{
+    title: String,
+    items: [String] // Changed to store just the names as strings
+  }]
+});
+
+const cateringPackageSchema = new mongoose.Schema({
+  packageType: String,
+  period: String,
+  name: String,
+  basePrice: Number,
+  description: String,
+  minGuests: Number,
+  maxGuests: Number,
+  menuSections: [menuSectionSchema],
+  includedItems: [{ menuItemId: String, maxSelection: Number }],
+  optionalItems: [{ menuItemId: String, maxSelection: Number }]
+});
+
+const featureSchema = new mongoose.Schema({
+  name: String,
+  icon: String
+});
 
 const serviceSchema = new mongoose.Schema({
-  vendor: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true
-  },
   name: {
     type: String,
     required: true
   },
-  address :{
+  address: {
     type: String,
-    required:true
+    required: true
   },
   description: {
     type: String,
@@ -20,6 +49,7 @@ const serviceSchema = new mongoose.Schema({
   },
   category: {
     type: String,
+    enum: ['venue', 'photography', 'decoration'],
     required: true
   },
   price: {
@@ -27,87 +57,40 @@ const serviceSchema = new mongoose.Schema({
     required: true
   },
   duration: {
-    type: Number, // in minutes
+    type: Number,
     required: true
   },
-  images: [{
-    type: String // URLs to images
-  }],
+  capacity: Number,
+  area: Number,
   isAvailable: {
     type: Boolean,
     default: true
   },
-  availability: {
-    type: [{
-      day: { type: String, enum: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] },
-      slots: [{
-        start: String,
-        end: String,
-        available: Boolean
-      }]
-    }],
-    default: []
+  features: [featureSchema],
+  cateringMenu: [menuItemSchema],
+  cateringPackages: [cateringPackageSchema],
+  hasCatering: Boolean,
+  vendor: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   },
-  packages: [{
-    period: { type: String, required: true },
-    name: { type: String, required: true },
-    price: { type: Number, required: true },
-    items: [String],
-    minGuests: { type: Number, required: true },
-    maxGuests: { type: Number, required: true },
-    description: String
-  }],
-  hasCatering: { type: Boolean, default: false },
-  features: [{
-    name: { type: String, required: true },
-  icon: { type: String }
-  }],
+  images: [String],
   status: {
     type: String,
-    enum: ["active", "inactive", "pending"],
-    default: "active"
-  },
-
-  
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
+    enum: ['active', 'inactive'],
+    default: 'active'
   },
   
-  capacity: Number,
-  area: Number,
-  
-  // Packages for venue services
-  packages: [{
-    name: {
-      type: String,
-      required: true
-    },
-    description: String,
-    price: {
-      type: Number,
-      required: true
-    },
-    includes: [String],
-    type: {
-      type: String,
-      enum: ["veg", "non-veg", "both", "other"],
-      default: "other"
-    }
+  availability: [{
+    date: Date,
+    periods: [String]
   }],
-  // Availability management
-  availableDates: [Date],
-  blockedDates: [Date],
+  
   createdAt: {
     type: Date,
     default: Date.now
   }
 });
 
-const Service = mongoose.model("Service", serviceSchema);
-
-export default Service;
+export default mongoose.model('Service', serviceSchema);

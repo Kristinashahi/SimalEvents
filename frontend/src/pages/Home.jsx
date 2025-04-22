@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-scroll";
+import { Link as RouterLink } from 'react-router-dom'; 
+import { Link as ScrollLink } from 'react-scroll'; 
 import '../styles/Home.css';
 
 const Home = () => {
@@ -12,6 +13,7 @@ const Home = () => {
       subtitle: "Your personal dream maker",
       description: "We make your special events unforgettable",
       buttonText: "Book Now",
+      
     },
     {
       id: 2,
@@ -72,15 +74,12 @@ const Home = () => {
                 <div>
                   <h1>{slide.subtitle}</h1>
                   <p>{slide.description}</p>
-                  <Link
-                    to="contact"
-                    spy={true}
-                    smooth={true}
-                    duration={500}
+                  <RouterLink
+                    to="/services" 
                     className="btn-slide"
                   >
                     {slide.buttonText}
-                  </Link>
+                  </RouterLink>
                 </div>
               </div>
             </div>
