@@ -12,10 +12,6 @@ import cookieParser from "cookie-parser";
 import bookingRoutes from "./router/Bookings.js";
 
 
-
-//import vendorroutes from "./router/vendorroutes.js";
-//import vendorRoutes from "./router/vendorRoute.js";
-
  
 const app = express()
 

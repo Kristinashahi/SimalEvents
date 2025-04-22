@@ -73,6 +73,7 @@ const ManageUsers = () => {
         <div className="card-header bg-primary text-white">
           <h5 className="mb-0">Users List</h5>
         </div>
+        
         <div className="card-body">
           <div className="table-responsive">
             <table className="table table-striped table-hover">

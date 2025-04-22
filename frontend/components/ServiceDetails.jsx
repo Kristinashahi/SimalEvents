@@ -672,6 +672,7 @@ const TIME_PERIODS = [
   background: rgba(255, 255, 255, 0.9);
   transform: scale(1.2);
 }
+  
       `}</style>
     </div>
   );

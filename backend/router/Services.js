@@ -1,4 +1,5 @@
 import express from "express";
+import mongoose from "mongoose";
 import { auth } from "../middleware/auth.js";
 import Service from "../models/Services.js";
 import upload from "../controller/multerconfig.js"; // Import your multer config
@@ -17,6 +18,49 @@ router.post("/", auth, upload.array('images', 5), async (req, res) => {
     const existingService = await Service.findOne({ vendor: req.user.id });
     if (existingService) {
       return res.status(400).json({ msg: "Vendor can only have one service" });
+    }
+
+    // Parse catering menu if provided
+    let cateringMenu = [];
+    if (req.body.cateringMenu) {
+      try {
+        cateringMenu = typeof req.body.cateringMenu === 'string' 
+          ? JSON.parse(req.body.cateringMenu) 
+          : req.body.cateringMenu;
+        
+        // Ensure all menu items have IDs
+        cateringMenu = cateringMenu.map(item => ({
+          ...item,
+          _id: item._id || new mongoose.Types.ObjectId().toString()
+        }));
+      } catch (err) {
+        console.error("Error parsing catering menu:", err);
+        return res.status(400).json({ message: 'Invalid catering menu format' });
+      }
+    }
+
+    // Parse catering packages if provided
+    let cateringPackages = [];
+if (req.body.cateringPackages) {
+  try {
+    cateringPackages = typeof req.body.cateringPackages === 'string' 
+      ? JSON.parse(req.body.cateringPackages) 
+      : req.body.cateringPackages;
+
+      // Validate that cateringPackages is an array
+    if (!Array.isArray(cateringPackages)) {
+      return res.status(400).json({ message: 'cateringPackages must be an array' });
+    }
+
+        // Ensure each catering package has a unique _id
+        cateringPackages = cateringPackages.map(pkg => ({
+          ...pkg,
+          _id: pkg._id || new mongoose.Types.ObjectId().toString(), 
+        }));
+      } catch (err) {
+        console.error("Error parsing catering packages:", err);
+        return res.status(400).json({ message: 'Invalid catering packages format' });
+      }
     }
 
     // Parse features if provided
@@ -51,11 +95,13 @@ router.post("/", auth, upload.array('images', 5), async (req, res) => {
     // Create new service with images
     const service = new Service({
       ...req.body,
-      features, // Add parsed features
-      packages, // Add parsed packages
+      features,
+      cateringMenu,
+      cateringPackages,
       vendor: req.user.id,
-      images, // Add image paths
-      status: "active" // or "pending" if you want admin approval
+      hasCatering: req.body.hasCatering === 'true',
+      images,
+      status: "active"
     });
 
     await service.save();
@@ -65,7 +111,6 @@ router.post("/", auth, upload.array('images', 5), async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 });
-
 
 
 
@@ -104,11 +149,40 @@ router.put("/:id", auth, upload.array('images', 5), async (req, res) => {
       }
     }
 
+    // Parse catering menu if provided
+    let cateringMenu = service.cateringMenu;
+    if (req.body.cateringMenu) {
+      try {
+        cateringMenu = typeof req.body.cateringMenu === 'string' 
+          ? JSON.parse(req.body.cateringMenu) 
+          : req.body.cateringMenu;
+      } catch (err) {
+        console.error("Error parsing catering menu:", err);
+        return res.status(400).json({ message: 'Invalid catering menu format' });
+      }
+    }
+
+    // Parse catering packages if provided
+    let cateringPackages = service.cateringPackages;
+    if (req.body.cateringPackages) {
+      try {
+        cateringPackages = typeof req.body.cateringPackages === 'string' 
+          ? JSON.parse(req.body.cateringPackages) 
+          : req.body.cateringPackages;
+      } catch (err) {
+        console.error("Error parsing catering packages:", err);
+        return res.status(400).json({ message: 'Invalid catering packages format' });
+      }
+    }
+
     const updatedService = await Service.findOneAndUpdate(
       { _id: req.params.id, vendor: req.user.id },
       { 
         ...req.body,
         features,
+        cateringMenu,
+        cateringPackages,
+        hasCatering: req.body.hasCatering === 'true',
         images: updatedImages 
       },
       { new: true }
@@ -139,8 +213,7 @@ router.put('/:id/images', auth, async (req, res) => {
       return res.status(404).json({ msg: 'Service not found' });
     }
 
-    // Optional: Add filesystem cleanup here if needed
-    // imageUrlsToDelete.forEach(deleteFileFromServer);
+   
 
     res.json(service);
   } catch (err) {
@@ -149,7 +222,7 @@ router.put('/:id/images', auth, async (req, res) => {
   }
 });
 
-// Get all services (no changes needed)
+// Get all services 
 router.get("/", async (req, res) => {
   try {
     const services = await Service.find({ status: "active" })
@@ -161,7 +234,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Get vendor's service (no changes needed)
+// Get vendor's service 
 router.get("/my-service", auth, async (req, res) => {
   try {
     if (req.user.role !== "vendor") {
@@ -229,7 +302,17 @@ router.post("/:id/availability", auth, async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 });
-
+router.get('/top-by-price', async (req, res) => {
+  try {
+    const topServices = await Service.find()
+      .sort({ price: -1 }) // Sort by price descending
+      .limit(5)
+      .select('name price category'); 
+    res.json(topServices);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
 router.get("/:id", async (req, res) => {
   try {
@@ -272,5 +355,9 @@ router.post("/:id/packages", auth, async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 });
+
+
+
+
 
 export default router;

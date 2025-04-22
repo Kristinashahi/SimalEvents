@@ -1,8 +1,9 @@
 import jwt from "jsonwebtoken";
 import User from "../models/user.js";
+import dotenv from "dotenv";
 
-const JWT_SECRET = "secret_key"; // Use the same secret key
 
+dotenv.config();
 
 
 export const auth = (req, res, next) => {
@@ -10,7 +11,7 @@ export const auth = (req, res, next) => {
   if (!token) return res.status(401).json({ msg: "No token, authorization denied" });
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     next();
   } catch (err) {

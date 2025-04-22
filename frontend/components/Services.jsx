@@ -11,6 +11,7 @@ const Services = () => {
   const [category, setCategory] = useState("venue");
   const [vendors, setVendors] = useState({});
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState(""); // Add search term state
 
   useEffect(() => {
     const fetchServicesAndVendors = async () => {
@@ -43,13 +44,20 @@ const Services = () => {
 
   useEffect(() => {
     if (allServices.length > 0) {
-      const filtered = allServices.filter(
+      let filtered = allServices.filter(
         (service) => service.category === category
       );
+      
+      // Apply search filter if search term exists
+      if (searchTerm) {
+        filtered = filtered.filter(service => 
+          service.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+      
       setFilteredServices(filtered);
     }
-  }, [category, allServices]);
-   
+  }, [category, allServices, searchTerm]); // Add searchTerm to dependencies
 
   const isServiceAvailableToday = (service) => {
     if (!service.isAvailable) return false;
@@ -68,6 +76,17 @@ const Services = () => {
   return (
     <div className="services-container">
       <h1 className="services-title">Our Services</h1>
+
+      {/* Add Search Bar Here */}
+      <div className="search-bar">
+        <input
+          type="text"
+          placeholder="Search services..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="search-input"
+        />
+      </div>
 
       <div className="category-filter">
         {["venue", "decoration", "photography"].map((cat) => (
@@ -90,7 +109,9 @@ const Services = () => {
         <>
           {filteredServices.length === 0 ? (
             <div className="no-services">
-              No services available in this category yet.
+              {searchTerm 
+                ? `No services found matching "${searchTerm}" in ${category} category`
+                : `No services available in ${category} category yet.`}
             </div>
           ) : (
             <div className="services-grid">
@@ -145,9 +166,9 @@ const Services = () => {
                     </div>
                   </div>
                   <div className="service-actions">
-                  <Link to={`/serviceDetails/${service._id}`} className="btn btn-secondary">
-  View Details
-</Link>
+                    <Link to={`/serviceDetails/${service._id}`} className="btn btn-secondary">
+                      View Details
+                    </Link>
                     <Link
                       to={`/book/${service._id}`}
                       className={`btn btn-primary ${
