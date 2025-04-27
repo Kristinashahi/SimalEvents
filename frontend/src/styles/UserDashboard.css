@@ -236,6 +236,44 @@ body {
 .pay-btn:hover {
   background-color: #4527a0;
 }
+.password-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.password-input-wrapper input {
+  padding-right: 40px;
+  width: 100%;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.paid-text {
+  color: #28a745;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+.password-toggle:hover {
+  color: #333;
+}
+
+.password-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
 
 .form-group {
   display: flex;

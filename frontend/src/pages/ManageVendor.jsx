@@ -1,25 +1,32 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { FaCheck, FaTimes, FaEye } from "react-icons/fa";
-import "bootstrap/dist/css/bootstrap.min.css";
+import { FaCheck, FaTimes, FaEye, FaSearch } from "react-icons/fa";
 import { getAuthData } from "../utils/auth-utils.js";
+import "../styles/ManageVendor.css";
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
 
 const ManageVendor = () => {
   const [vendors, setVendors] = useState([]);
+  const [filteredVendors, setFilteredVendors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [actionStatus, setActionStatus] = useState({ message: "", type: "" });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchCategory, setSearchCategory] = useState("all");
   
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchVendors();
   }, []);
+
+  useEffect(() => {
+    filterVendors();
+  }, [vendors, searchTerm, searchCategory]);
 
   const fetchVendors = async () => {
     const { token } = getAuthData();
@@ -30,7 +37,7 @@ const ManageVendor = () => {
 
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:4000/admin/vendors", {
+      const response = await axios.get(`${API_BASE_URL}/admin/vendors`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setVendors(response.data);
@@ -45,33 +52,57 @@ const ManageVendor = () => {
     }
   };
 
+  const filterVendors = () => {
+    let results = vendors;
+    
+    // Filter by search term
+    if (searchTerm) {
+      results = results.filter(vendor => 
+        vendor.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        vendor.contactPerson?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        vendor.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        vendor.serviceCategory?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        vendor.serviceCategories?.some(cat => 
+          cat.toLowerCase().includes(searchTerm.toLowerCase())
+      ));
+    }
+    
+    // Filter by category
+    if (searchCategory !== "all") {
+      results = results.filter(vendor => 
+        vendor.serviceCategory === searchCategory ||
+        vendor.serviceCategories?.includes(searchCategory)
+      );
+    }
+    
+    setFilteredVendors(results);
+  };
+
   const handleApprove = async (id) => {
     const { token } = getAuthData();
     try {
-      await axios.put(`http://localhost:4000/admin/approve-vendor/${id}`, {}, {
+      await axios.put(`${API_BASE_URL}/admin/approve-vendor/${id}`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setActionStatus({ message: "Vendor approved successfully!", type: "success" });
-      // Update vendors list
       fetchVendors();
     } catch (error) {
       console.error("Error approving vendor:", error);
-      setActionStatus({ message: "Failed to approve vendor", type: "danger" });
+      setActionStatus({ message: "Failed to approve vendor", type: "error" });
     }
   };
 
   const handleReject = async (id) => {
     const { token } = getAuthData();
     try {
-      await axios.put(`http://localhost:4000/admin/reject-vendor/${id}`, {}, {
+      await axios.put(`${API_BASE_URL}/admin/reject-vendor/${id}`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setActionStatus({ message: "Vendor application rejected", type: "warning" });
-      // Update vendors list
       fetchVendors();
     } catch (error) {
       console.error("Error rejecting vendor:", error);
-      setActionStatus({ message: "Failed to reject vendor", type: "danger" });
+      setActionStatus({ message: "Failed to reject vendor", type: "error" });
     }
   };
 
@@ -85,218 +116,246 @@ const ManageVendor = () => {
     setSelectedVendor(null);
   };
 
-  if (loading) return <div className="text-center mt-5 p-5"><div className="spinner-border" role="status"></div></div>;
+  // Extract unique service categories for filter dropdown
+  const serviceCategories = [...new Set(
+    vendors.flatMap(vendor => 
+      vendor.serviceCategories || 
+      (vendor.serviceCategory ? [vendor.serviceCategory] : [])
+  ))].filter(Boolean);
+
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="spinner"></div>
+        <p>Loading vendors...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="d-flex">
-      
-
+    <div className="manage-vendor-container">
       {/* Main content */}
-      <div className="container-fluid p-4">
-        <h2 className="mb-4">Vendor Management</h2>
+      <main className="content-area">
+        <header className="content-header">
+          <h1>Vendor Management</h1>
+        </header>
         
         {actionStatus.message && (
-          <div className={`alert alert-${actionStatus.type} alert-dismissible fade show`} role="alert">
+          <div className={`alert-message ${actionStatus.type}`}>
             {actionStatus.message}
             <button 
-              type="button" 
-              className="btn-close" 
+              className="close-btn" 
               onClick={() => setActionStatus({ message: "", type: "" })}
-            ></button>
+            >×</button>
           </div>
         )}
 
-        <div className="card shadow">
-          <div className="card-header bg-light">
-            <h4>Vendor Applications</h4>
+        <div className="search-filters">
+          <div className="search-bar">
+            <FaSearch className="search-icon" />
+            <input
+              type="text"
+              placeholder="Search vendors..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-          <div className="card-body">
-            <div className="table-responsive">
-              <table className="table table-hover">
-                <thead className="table-light">
-                  <tr>
-                    <th>Business Name</th>
-                    <th>Contact Person</th>
-                    <th>Email</th>
-                    <th>Status</th>
-                    <th>Registration Date</th>
-                    <th>Actions</th>
+          
+          <div className="category-filter">
+            <select
+              value={searchCategory}
+              onChange={(e) => setSearchCategory(e.target.value)}
+            >
+              <option value="all">All Categories</option>
+              {serviceCategories.map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="vendor-table-container">
+          <div className="table-header">
+            <h3>Vendor Applications</h3>
+            <span className="count-badge">{filteredVendors.length} vendors</span>
+          </div>
+          
+          <div className="table-wrapper">
+            <table className="vendor-table">
+              <thead>
+                <tr>
+                  <th>Business Name</th>
+                  <th>Contact Person</th>
+                  <th>Email</th>
+                  <th>Service Category</th>
+                  <th>Status</th>
+                  <th>Registration Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredVendors.length === 0 ? (
+                  <tr className="no-data">
+                    <td colSpan="7">No vendor applications found</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {vendors.length === 0 ? (
-                    <tr>
-                      <td colSpan="6" className="text-center">No vendor applications found</td>
-                    </tr>
-                  ) : (
-                    vendors.map((vendor) => (
-                      <tr key={vendor._id}>
-                        <td>{vendor.businessName || "N/A"}</td>
-                        <td>{vendor.contactPerson || vendor.name}</td>
-                        <td>{vendor.email}</td>
-                        <td>
-                          <span className={`badge ${
-                            vendor.vendorStatus === "approved" 
-                              ? "bg-success" 
-                              : vendor.vendorStatus === "rejected" 
-                                ? "bg-danger" 
-                                : "bg-warning"
-                          }`}>
-                            {vendor.vendorStatus}
-                          </span>
-                        </td>
-                        <td>{new Date(vendor.createdAt).toLocaleDateString()}</td>
-                        <td>
-                          <div className="btn-group" role="group">
-                            <button 
-                              className="btn btn-sm btn-info" 
-                              onClick={() => viewVendorDetails(vendor)}
-                              title="View Details"
-                            >
-                              <FaEye />
-                            </button>
-                            {vendor.vendorStatus === "pending" && (
-                              <>
-                                <button 
-                                  className="btn btn-sm btn-success" 
-                                  onClick={() => handleApprove(vendor._id)}
-                                  title="Approve"
-                                >
-                                  <FaCheck />
-                                </button>
-                                <button 
-                                  className="btn btn-sm btn-danger" 
-                                  onClick={() => handleReject(vendor._id)}
-                                  title="Reject"
-                                >
-                                  <FaTimes />
-                                </button>
-                              </>
-                            )}
-                            {vendor.vendorStatus === "rejected" && (
+                ) : (
+                  filteredVendors.map((vendor) => (
+                    <tr key={vendor._id}>
+                      <td>{vendor.businessName || "N/A"}</td>
+                      <td>{vendor.contactPerson || vendor.name}</td>
+                      <td>{vendor.email}</td>
+                      <td>
+                        {vendor.serviceCategories?.join(", ") || 
+                         vendor.serviceCategory || "N/A"}
+                      </td>
+                      <td>
+                        <span className={`status-badge ${vendor.vendorStatus}`}>
+                          {vendor.vendorStatus}
+                        </span>
+                      </td>
+                      <td>{new Date(vendor.createdAt).toLocaleDateString()}</td>
+                      <td>
+                        <div className="action-buttons">
+                          <button 
+                            className="view-btn" 
+                            onClick={() => viewVendorDetails(vendor)}
+                            title="View Details"
+                          >
+                            <FaEye />
+                          </button>
+                          {vendor.vendorStatus === "pending" && (
+                            <>
                               <button 
-                                className="btn btn-sm btn-success" 
+                                className="approve-btn" 
                                 onClick={() => handleApprove(vendor._id)}
                                 title="Approve"
                               >
                                 <FaCheck />
                               </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                              <button 
+                                className="reject-btn" 
+                                onClick={() => handleReject(vendor._id)}
+                                title="Reject"
+                              >
+                                <FaTimes />
+                              </button>
+                            </>
+                          )}
+                          {vendor.vendorStatus === "rejected" && (
+                            <button 
+                              className="approve-btn" 
+                              onClick={() => handleApprove(vendor._id)}
+                              title="Approve"
+                            >
+                              <FaCheck />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
-      </div>
+      </main>
 
       {/* Vendor Details Modal */}
       {showModal && selectedVendor && (
-        <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-lg">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Vendor Details</h5>
-                <button type="button" className="btn-close" onClick={closeModal}></button>
-              </div>
-              <div className="modal-body">
-                <div className="row">
-                  <div className="col-md-6">
-                    <p><strong>Business Name:</strong> {selectedVendor.businessName || "N/A"}</p>
-                    <p><strong>Contact Person:</strong> {selectedVendor.contactPerson || selectedVendor.name}</p>
-                    <p><strong>Email:</strong> {selectedVendor.email}</p>
-                    <p><strong>Phone:</strong> {selectedVendor.phoneNumber || "N/A"}</p>
-                    <p><strong>Address:</strong> {selectedVendor.address || "N/A"}</p>
-                    <p><strong>Website:</strong> {selectedVendor.website || "N/A"}</p>
-                  </div>
-                  <div className="col-md-6">
-                    <p><strong>Tax ID:</strong> {selectedVendor.taxId || "N/A"}</p>
-                    <p><strong>Status:</strong> <span className={`badge ${
-                      selectedVendor.vendorStatus === "approved" 
-                        ? "bg-success" 
-                        : selectedVendor.vendorStatus === "rejected" 
-                          ? "bg-danger" 
-                          : "bg-warning"
-                    }`}>{selectedVendor.vendorStatus}</span></p>
-                    <p><strong>Service Category:</strong> 
-                {selectedVendor.serviceCategory || selectedVendor.serviceCategories || "N/A"}
-              </p>
-                    
-                    <p><strong>Registration Date:</strong> {new Date(selectedVendor.createdAt).toLocaleString()}</p>
-                  </div>
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>Vendor Details</h2>
+              <button className="close-modal" onClick={closeModal}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="vendor-details-grid">
+                <div className="detail-group">
+                  <h4>Business Information</h4>
+                  <p><strong>Name:</strong> {selectedVendor.businessName || "N/A"}</p>
+                  <p><strong>Contact:</strong> {selectedVendor.contactPerson || selectedVendor.name}</p>
+                  <p><strong>Email:</strong> {selectedVendor.email}</p>
+                  <p><strong>Phone:</strong> {selectedVendor.phoneNumber || "N/A"}</p>
                 </div>
                 
-                <div className="mt-3">
-                  <h6>Business Description</h6>
+                <div className="detail-group">
+                  <h4>Service Details</h4>
+                  <p><strong>Category:</strong> 
+                    {selectedVendor.serviceCategories?.join(", ") || 
+                     selectedVendor.serviceCategory || "N/A"}
+                  </p>
+                  <p><strong>Status:</strong> 
+                    <span className={`status-badge ${selectedVendor.vendorStatus}`}>
+                      {selectedVendor.vendorStatus}
+                    </span>
+                  </p>
+                  <p><strong>Registered:</strong> {new Date(selectedVendor.createdAt).toLocaleString()}</p>
+                </div>
+                
+                <div className="detail-group full-width">
+                  <h4>Business Description</h4>
                   <p>{selectedVendor.description || "No description provided."}</p>
                 </div>
                 
                 {selectedVendor.documentUrl && (
-            <div className="mt-3">
-              <h6>Business Documents</h6>
-              <div className="document-preview">
-                {selectedVendor.documentUrl.endsWith('.pdf') ? (
-                  <div className="alert alert-info">
+                  <div className="detail-group full-width">
+                    <h4>Business Documents</h4>
+                    <div className="document-preview">
+                      {selectedVendor.documentUrl.endsWith('.pdf') ? (
+                        <div className="pdf-notice">
+                          <a 
+                            href={`${API_BASE_URL}/${selectedVendor.documentUrl}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                          >
+                            View PDF Document
+                          </a>
+                        </div>
+                      ) : (
+                        <img 
+                          src={`${API_BASE_URL}/${selectedVendor.documentUrl}`} 
+                          alt="Business Document" 
+                          className="document-image"
+                        />
+                      )}
+                    </div>
                     <a 
                       href={`${API_BASE_URL}/${selectedVendor.documentUrl}`} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-decoration-none"
+                      className="view-document-btn"
                     >
-                      View PDF Document
+                      View Full Document
                     </a>
                   </div>
-                ) : (
-                  <img 
-                    src={`${API_BASE_URL}/${selectedVendor.documentUrl}`} 
-                    alt="Business Document" 
-                    className="img-fluid rounded border"
-                    style={{ maxHeight: '300px' }}
-                  />
                 )}
-              </div>
-              <div className="mt-2">
-                <a 
-                  href={`${API_BASE_URL}/${selectedVendor.documentUrl}`} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="btn btn-sm btn-outline-primary"
-                >
-                  View Full Document
-                </a>
               </div>
             </div>
-          )}
-              </div>
-              <div className="modal-footer">
-                {selectedVendor.vendorStatus === "pending" && (
-                  <>
-                    <button 
-                      className="btn btn-success" 
-                      onClick={() => {
-                        handleApprove(selectedVendor._id);
-                        closeModal();
-                      }}
-                    >
-                      Approve Vendor
-                    </button>
-                    <button 
-                      className="btn btn-danger" 
-                      onClick={() => {
-                        handleReject(selectedVendor._id);
-                        closeModal();
-                      }}
-                    >
-                      Reject Application
-                    </button>
-                  </>
-                )}
-                <button type="button" className="btn btn-secondary" onClick={closeModal}>Close</button>
-              </div>
+            <div className="modal-footer">
+              {selectedVendor.vendorStatus === "pending" && (
+                <>
+                  <button 
+                    className="modal-approve-btn" 
+                    onClick={() => {
+                      handleApprove(selectedVendor._id);
+                      closeModal();
+                    }}
+                  >
+                    Approve Vendor
+                  </button>
+                  <button 
+                    className="modal-reject-btn" 
+                    onClick={() => {
+                      handleReject(selectedVendor._id);
+                      closeModal();
+                    }}
+                  >
+                    Reject Application
+                  </button>
+                </>
+              )}
+              <button className="modal-close-btn" onClick={closeModal}>Close</button>
             </div>
           </div>
         </div>

@@ -3,7 +3,7 @@ import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import * as jwtDecode from "jwt-decode";
 import { storeAuthData } from "../utils/auth-utils.js";
-import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import eye icons
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import "../styles/Login.css";
 import loginImage from "../Images/cov2.jpeg";
 
@@ -19,48 +19,61 @@ const SignIn = () => {
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("info");
-  const [showPassword, setShowPassword] = useState(false); // State for password visibility
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Add loading state
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleForgotPassword = async () => {
+    if (!forgotPasswordEmail) {
+      setMessage("Please enter your email address");
+      setMessageType("danger");
+      return;
+    }
+    setIsLoading(true);
     try {
       await axios.post(`${API_BASE_URL}/auth/forgot-password`, {
-        email: forgotPasswordEmail
+        email: forgotPasswordEmail,
       });
       setMessage("Password reset link sent to your email!");
       setMessageType("success");
       setShowForgotPassword(false);
+      setForgotPasswordEmail("");
     } catch (error) {
       setMessage(error.response?.data?.msg || "Failed to send reset link");
       setMessageType("danger");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
-      const res = await axios.post(`${API_BASE_URL}/auth/login`, formData, { withCredentials: true });
+      const res = await axios.post(`${API_BASE_URL}/auth/login`, formData, {
+        withCredentials: true,
+      });
       const token = res.data.token;
-      
+
       try {
         const decoded = jwtDecode.jwtDecode(token);
         const userRole = decoded.role || "user";
-        
+
         storeAuthData(token, {
           id: decoded.id,
           name: decoded.name,
           email: decoded.email,
-          role: userRole
+          role: userRole,
         });
-        
+
         setMessage(`Login successful! Redirecting to ${userRole} dashboard...`);
         setMessageType("success");
-        
+
         setTimeout(() => {
-          switch(userRole) {
+          switch (userRole) {
             case "admin":
               navigate("/admin-dashboard");
               break;
@@ -68,15 +81,19 @@ const SignIn = () => {
               if (decoded.status === "approved") {
                 navigate("/vendor-dashboard");
               } else if (decoded.status === "pending") {
-                setMessage("Your vendor account is pending approval. You'll be redirected to the pending page.");
+                setMessage(
+                  "Your vendor account is pending approval. You'll be redirected to the pending page."
+                );
                 setMessageType("warning");
                 setTimeout(() => navigate("/vendor-pending"), 2000);
               } else if (decoded.status === "rejected") {
-                setMessage("Your vendor application was rejected. You'll be redirected to the rejection page.");
+                setMessage(
+                  "Your vendor application was rejected. You'll be redirected to the rejection page."
+                );
                 setMessageType("danger");
                 setTimeout(() => navigate("/vendor-rejected"), 2000);
               } else {
-                navigate("/vendordashboard");
+                navigate("/vendor-dashboard");
               }
               break;
             case "user":
@@ -88,38 +105,35 @@ const SignIn = () => {
         }, 1500);
       } catch (decodeError) {
         console.error("Error decoding token:", decodeError);
-        
         try {
           const userRes = await axios.get(`${API_BASE_URL}/auth/me`, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
+            headers: { Authorization: `Bearer ${token}` },
           });
-          
+
           const userData = userRes.data;
           const userRole = userData.role || "user";
-          
+
           storeAuthData(token, {
             id: userData._id,
             name: userData.name,
             email: userData.email,
-            role: userRole
+            role: userRole,
           });
-          
+
           setTimeout(() => {
-            switch(userRole) {
+            switch (userRole) {
               case "admin":
                 navigate("/admin-dashboard");
                 break;
               case "vendor":
                 if (userData.status === "approved") {
-                  navigate("/vendordashboard");
+                  navigate("/vendor-dashboard");
                 } else if (userData.status === "pending") {
                   navigate("/vendor-pending");
                 } else if (userData.status === "rejected") {
                   navigate("/vendor-rejected");
                 } else {
-                  navigate("/vendordashboard");
+                  navigate("/vendor-dashboard");
                 }
                 break;
               case "user":
@@ -136,16 +150,10 @@ const SignIn = () => {
       }
     } catch (error) {
       console.error("Login error:", error);
-      if (error.response?.data?.msg?.includes("pending approval")) {
-        setMessage("Your vendor account is pending approval. Please check back later.");
-        setMessageType("warning");
-      } else if (error.response?.data?.msg?.includes("application was rejected")) {
-        setMessage("Your vendor application has been rejected. Please contact support for more information.");
-        setMessageType("danger");
-      } else {
-        setMessage(error.response?.data?.msg || "Invalid credentials");
-        setMessageType("danger"); 
-      }
+      setMessage(error.response?.data?.msg || "Invalid credentials");
+      setMessageType("danger");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -167,7 +175,7 @@ const SignIn = () => {
               {message}
             </div>
           )}
-          
+
           {!showForgotPassword ? (
             <>
               <form onSubmit={handleSubmit} className="signin-form">
@@ -181,6 +189,7 @@ const SignIn = () => {
                     value={formData.email}
                     onChange={handleChange}
                     required
+                    disabled={isLoading}
                   />
                 </div>
                 <div className="form-group password-container">
@@ -194,30 +203,42 @@ const SignIn = () => {
                       value={formData.password}
                       onChange={handleChange}
                       required
+                      disabled={isLoading}
                     />
                     <button
                       type="button"
                       className="password-toggle"
                       onClick={() => setShowPassword(!showPassword)}
                       aria-label={showPassword ? "Hide password" : "Show password"}
+                      disabled={isLoading}
                     >
                       {showPassword ? <FaEyeSlash /> : <FaEye />}
                     </button>
                   </div>
                   <div className="forgot-password-link-container">
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       className="forgot-password-link"
                       onClick={() => setShowForgotPassword(true)}
+                      disabled={isLoading}
                     >
                       Forgot Password?
                     </button>
                   </div>
                 </div>
-                <button type="submit" className="primary-button">Sign In</button>
+                <button
+                  type="submit"
+                  className="primary-button"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Signing In..." : "Sign In"}
+                </button>
               </form>
               <p className="signin-footer">
-                Don't have an account? <Link to="/signup" className="text-link">Register as Client</Link>
+                Don't have an account?{" "}
+                <Link to="/signup" className="text-link">
+                  Register as Client
+                </Link>
               </p>
               <Link to="/vendorRegister" className="secondary-button">
                 Register as Vendor
@@ -235,20 +256,24 @@ const SignIn = () => {
                   value={forgotPasswordEmail}
                   onChange={(e) => setForgotPasswordEmail(e.target.value)}
                   required
+                  disabled={isLoading}
                 />
               </div>
-              <button 
+              <button
                 onClick={handleForgotPassword}
                 className="primary-button"
+                disabled={isLoading}
               >
-                Send Reset Link
+                {isLoading ? "Sending..." : "Send Reset Link"}
               </button>
-              <button 
+              <button
                 onClick={() => {
                   setShowForgotPassword(false);
                   setMessage("");
+                  setForgotPasswordEmail("");
                 }}
                 className="secondary-button"
+                disabled={isLoading}
               >
                 Back to Sign In
               </button>

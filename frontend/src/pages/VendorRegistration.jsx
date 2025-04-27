@@ -250,7 +250,7 @@ const VendorRegistration = () => {
                   </div>
 
                   <div className="mb-3">
-                    <label className="form-label fw-bold">Website (optional)</label>
+                    <label className="form-label fw-bold">Website/Social-media (optional)</label>
                     <input
                       type="url"
                       name="website"

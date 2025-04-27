@@ -4,12 +4,13 @@ import { Line } from 'react-chartjs-2';
 import { Chart, registerables } from 'chart.js';
 import { format, subDays } from 'date-fns';
 import { getAuthData } from '../utils/auth-utils.js';
+import '../styles/TopServices.css';
 
 Chart.register(...registerables);
 
 const GrowthChart = () => {
   const [growthData, setGrowthData] = useState(null);
-  const [timeRange, setTimeRange] = useState('7'); 
+  const [timeRange, setTimeRange] = useState('7');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,25 +33,22 @@ const GrowthChart = () => {
   }, [timeRange]);
 
   if (loading) {
-    return <div className="text-center my-5">Loading growth data...</div>;
+    return <div className="chart-loading">Loading growth data...</div>;
   }
 
   if (!growthData) {
-    return <div className="text-center my-5">No growth data available</div>;
+    return <div className="chart-empty">No growth data available</div>;
   }
 
-  // Process data for Chart.js
   const processChartData = (data, label, color) => {
     const dates = [];
     const counts = [];
-    
-    // Create date range
+
     const days = parseInt(timeRange);
-    const dateArray = Array.from({ length: days }, (_, i) => 
+    const dateArray = Array.from({ length: days }, (_, i) =>
       format(subDays(new Date(), days - 1 - i), 'yyyy-MM-dd')
     );
 
-    // Fill data
     dateArray.forEach(date => {
       const found = data.find(item => item._id === date);
       dates.push(format(new Date(date), 'MMM dd'));
@@ -100,25 +98,27 @@ const GrowthChart = () => {
   };
 
   return (
-    <div className="card p-3 mb-4">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h4>User & Vendor Growth</h4>
-        <div className="btn-group">
-          <button 
-            className={`btn btn-sm ${timeRange === '7' ? 'btn-primary' : 'btn-outline-primary'}`}
+    <div className="chart-container">
+      <div className="chart-header">
+        <h3 className="chart-title">User & Vendor Growth</h3>
+        <div className="time-range-buttons">
+          <button
+            className={`time-range-btn ${timeRange === '7' ? 'active' : ''}`}
             onClick={() => setTimeRange('7')}
           >
             7 Days
           </button>
-          <button 
-            className={`btn btn-sm ${timeRange === '30' ? 'btn-primary' : 'btn-outline-primary'}`}
+          <button
+            className={`time-range-btn ${timeRange === '30' ? 'active' : ''}`}
             onClick={() => setTimeRange('30')}
           >
             30 Days
           </button>
         </div>
       </div>
-      <Line data={chartData} options={options} height={300} />
+      <div className="chart">
+        <Line data={chartData} options={options} />
+      </div>
     </div>
   );
 };

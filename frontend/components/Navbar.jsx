@@ -18,6 +18,7 @@ const Navbar = () => {
       setIsLoggedIn(true);
       setUser(userInfo);
     }
+    
   }, []);
 
   const handleLogout = () => {

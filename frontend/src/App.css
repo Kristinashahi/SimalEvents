@@ -25,130 +25,7 @@ body {
   }
 }
 
-nav {
-  display: flex;
-  max-width: 1500px;
-  min-width: 1500px;
-  padding: 25px 10px 40px 10px;
-  margin-bottom: 25px;
-  justify-content: space-between;
-  position: relative;
-  align-items: center;
-  border-bottom-right-radius: 7px;
-  border-bottom-left-radius: 7px;
-  margin: 0 auto;
-}
-nav::after {
-  content: "";
-  position: absolute;
-  height: 0.6px;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background: rgb(201, 201, 201);
-}
-nav .logo {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  font-size: 2rem;
-}
-nav .navLinks {
-  flex: 2;
-}
-nav .navLinks {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-}
-nav .navLinks .links {
-  display: flex;
-  gap: 25px;
-}
-nav .navLinks .links a {
-  text-decoration: none;
-  font-weight: 300;
-  letter-spacing: 1.4px;
-  font-size: 24px;
-}
-nav .navLinks .links a:hover {
-  transition: 0.3s;
-  cursor: pointer;
-}
-nav .hamburger {
-  display: none;
-}
-nav svg {
-  font-size: 1.75rem;
-}
-@media (max-width: 1520px) {
-  nav {
-    min-width: 100%;
-    padding: 25px 20px 40px 20px;
-  }
-}
-@media (max-width: 1100px) {
-  nav {
-    z-index: 20;
-    position: unset;
-    background: #ffffff63;
-    padding: 10px 30px;
-  }
-  nav::after {
-    content: "";
-    display: none;
-  }
-  nav .hamburger {
-    display: flex;
-  }
-  nav .navLinks {
-    position: absolute;
-    display: flex;
-    flex-direction: column;
-    top: -100%;
-    background: #a2783a;
-    width: 100%;
-    left: 0;
-    padding: 15px 7.5px;
-    z-index: -1;
-    transition: 0.3s;
-  }
-  nav .showmenu {
-    position: absolute;
-    display: flex;
-    flex-direction: column;
-    top: 67px;
-    background: #a2783a;
-    left: 0;
-    padding: 15px 7.5px;
-    transition: 0.3s;
-    margin: 0 15px;
-    width: 96.7vw;
-    margin-right: 30px;
-    border-top-right-radius: 7px;
-    border-top-left-radius: 7px;
-    z-index: 2;
-  }
-  nav .showmenu .links {
-    flex-direction: column;
-    text-align: center;
-  }
-  nav .navLinks .links a {
-    color: #fff;
-  }
-}
-@media (max-width: 800px) {
-  nav .showmenu {
-    width: 96vw;
-  }
-}
-@media (max-width: 650px) {
-  nav .showmenu {
-    margin: 0;
-    width: 100%;
-    border-radius: 0;
-  }
-}
+
 
 .hero {
   position: relative;
@@ -429,4 +306,6 @@ footer .banner .tag div button {
     grid-gap: 20px;
   }
 }
+
+
 

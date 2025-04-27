@@ -1,9 +1,23 @@
+// src/VendorDashboard.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { getAuthData, clearAuthData } from "../utils/auth-utils.js";
 import { toast } from "react-hot-toast";
-import { FiUser, FiCalendar, FiLogOut, FiEdit, FiTrash2, FiCheck, FiX, FiImage, FiDollarSign, FiClock, FiUsers, FiHome } from "react-icons/fi";
+import {
+  FiUser,
+  FiCalendar,
+  FiLogOut,
+  FiEdit,
+  FiTrash2,
+  FiCheck,
+  FiX,
+  FiImage,
+  FiClock,
+  FiUsers,
+  FiHome,
+  FiDollarSign,
+} from "react-icons/fi";
 import "../styles/VendorDashboard.css";
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
@@ -42,6 +56,7 @@ const VendorDashboard = () => {
   const [userInfo, setUserInfo] = useState(null);
   const [service, setService] = useState(null);
   const [bookings, setBookings] = useState([]);
+  const [totalRevenue, setTotalRevenue] = useState(0); // New state for revenue
   const [loading, setLoading] = useState(true);
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState(null);
@@ -67,7 +82,8 @@ const VendorDashboard = () => {
   const [formErrors, setFormErrors] = useState({});
   const [showCateringModal, setShowCateringModal] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
-  const [khaltiMerchantId, setKhaltiMerchantId] = useState("");
+  const [sortConfig, setSortConfig] = useState({ key: "date", direction: "desc" }); // Sorting state
+  const [statusFilter, setStatusFilter] = useState("all"); // Filter state
 
   useEffect(() => {
     const fetchData = async () => {
@@ -78,14 +94,13 @@ const VendorDashboard = () => {
           return;
         }
 
-        // Fetch vendor profile
+        // Fetch user profile
         const userRes = await axios.get(`${API_BASE_URL}/auth/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUserInfo(userRes.data);
-        setKhaltiMerchantId(userRes.data.khaltiMerchantId || "");
 
-        // Fetch vendor's service
+        // Fetch service
         const serviceRes = await axios.get(`${API_BASE_URL}/api/services/my-service`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -108,6 +123,12 @@ const VendorDashboard = () => {
             cateringPackages: serviceRes.data.cateringPackages || [],
           });
         }
+
+        // Fetch total revenue
+        const revenueRes = await axios.get(`${API_BASE_URL}/api/bookings/vendor/revenue`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setTotalRevenue(revenueRes.data.totalRevenue || 0);
 
         await fetchVendorBookings(token);
       } catch (error) {
@@ -159,12 +180,52 @@ const VendorDashboard = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       await fetchVendorBookings(token);
-      toast.success(`Booking ${status} successfully`);
+      const revenueRes = await axios.get(`${API_BASE_URL}/api/bookings/vendor/revenue`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTotalRevenue(revenueRes.data.totalRevenue || 0);
+      toast.success(`Booking ${status} successfully${status === "confirmed" ? " and email sent to customer" : ""}`);
     } catch (error) {
       console.error("Error updating booking status:", error);
       toast.error(error.response?.data?.msg || "Failed to update booking status");
     }
   };
+
+  // Sorting function
+  const sortBookings = (bookings, key, direction) => {
+    return [...bookings].sort((a, b) => {
+      if (key === "date") {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return direction === "asc" ? dateA - dateB : dateB - dateA;
+      }
+      if (key === "status") {
+        return direction === "asc"
+          ? a.status.localeCompare(b.status)
+          : b.status.localeCompare(a.status);
+      }
+      if (key === "totalPrice") {
+        const priceA = a.totalPrice || 0;
+        const priceB = b.totalPrice || 0;
+        return direction === "asc" ? priceA - priceB : priceB - priceA;
+      }
+      return 0;
+    });
+  };
+
+  const handleSort = (key) => {
+    setSortConfig((prev) => ({
+      key,
+      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
+    }));
+  };
+
+  // Filter bookings by status
+  const filteredBookings = statusFilter === "all"
+    ? bookings
+    : bookings.filter((booking) => booking.status === statusFilter);
+
+  const sortedBookings = sortBookings(filteredBookings, sortConfig.key, sortConfig.direction);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -251,7 +312,6 @@ const VendorDashboard = () => {
     try {
       const { token } = getAuthData();
 
-      // Delete requested images
       if (imagesToDelete.length > 0) {
         await axios.put(
           `${API_BASE_URL}/api/services/${service._id}/images`,
@@ -262,7 +322,6 @@ const VendorDashboard = () => {
 
       const formDataToSend = new FormData();
 
-      // Append all form data
       Object.entries(formData).forEach(([key, value]) => {
         if (key !== "images") {
           if (key === "features" || key === "cateringPackages") {
@@ -273,12 +332,10 @@ const VendorDashboard = () => {
         }
       });
 
-      // Append existing images that weren't deleted
       formData.images
         .filter((img) => typeof img === "string" && !imagesToDelete.includes(img.replace(`${API_BASE_URL}/`, "")))
         .forEach((img) => formDataToSend.append("existingImages", img));
 
-      // Append new images
       newImages.forEach((image) => {
         formDataToSend.append("images", image);
       });
@@ -333,25 +390,6 @@ const VendorDashboard = () => {
     } catch (error) {
       console.error("Error deleting service:", error);
       toast.error(error.response?.data?.msg || "Failed to delete service");
-    }
-  };
-
-  const handleUpdateMerchantId = async () => {
-    if (!khaltiMerchantId) {
-      toast.error("Please enter a Khalti merchant ID");
-      return;
-    }
-    try {
-      const { token } = getAuthData();
-      await axios.put(
-        `${API_BASE_URL}/auth/profile`,
-        { khaltiMerchantId },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success("Khalti merchant ID updated successfully");
-      setUserInfo({ ...userInfo, khaltiMerchantId });
-    } catch (error) {
-      toast.error(error.response?.data?.msg || "Failed to update merchant ID");
     }
   };
 
@@ -985,12 +1023,25 @@ const VendorDashboard = () => {
       <div className="bookings-section">
         <div className="section-header">
           <h2>Bookings</h2>
-          <button
-            className="refresh-btn"
-            onClick={() => fetchVendorBookings(getAuthData().token)}
-          >
-            Refresh
-          </button>
+          <div className="booking-controls">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="filter-select"
+            >
+              <option value="all">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="paid">Paid</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            <button
+              className="refresh-btn"
+              onClick={() => fetchVendorBookings(getAuthData().token)}
+            >
+              Refresh
+            </button>
+          </div>
         </div>
 
         {bookingLoading ? (
@@ -1008,31 +1059,37 @@ const VendorDashboard = () => {
               Retry
             </button>
           </div>
-        ) : bookings.length > 0 ? (
+        ) : sortedBookings.length > 0 ? (
           <div className="bookings-table">
             <div className="table-header">
+              <div onClick={() => handleSort("date")} className="sortable">
+                Date {sortConfig.key === "date" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+              </div>
               <div>Customer</div>
               <div>Service</div>
-              <div>Date</div>
               <div>Time Periods</div>
               <div>Packages</div>
               <div>Guests</div>
-              <div>Status</div>
-              <div>Payment Status</div>
-              <div>Total Price</div>
+              <div onClick={() => handleSort("status")} className="sortable">
+                Status {sortConfig.key === "status" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+              </div>
+              <div>Payment</div>
+              <div onClick={() => handleSort("totalPrice")} className="sortable">
+                Total Price {sortConfig.key === "totalPrice" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+              </div>
               <div>Actions</div>
             </div>
 
-            {bookings.map((booking) => {
+            {sortedBookings.map((booking) => {
               const cateringPackage = booking.cateringPackage?.packageId
                 ? service?.cateringPackages?.find((pkg) => pkg._id === booking.cateringPackage.packageId)
                 : null;
 
               return (
                 <div key={booking._id} className="booking-row">
+                  <div>{new Date(booking.date).toLocaleDateString()}</div>
                   <div>{booking.user?.name || "N/A"}</div>
                   <div>{booking.service?.name || "N/A"}</div>
-                  <div>{new Date(booking.date).toLocaleDateString()}</div>
                   <div>
                     {booking.periods
                       ?.map((periodId) => {
@@ -1097,7 +1154,7 @@ const VendorDashboard = () => {
           </div>
         ) : (
           <div className="empty-state">
-            <p>No bookings yet.</p>
+            <p>No bookings found.</p>
           </div>
         )}
 
@@ -1109,24 +1166,34 @@ const VendorDashboard = () => {
   const renderProfile = () => {
     return (
       <div className="profile-section">
-        <h2>Update Payment Settings</h2>
-        {userInfo?.vendorStatus !== "approved" ? (
-          <p>Your vendor account is not yet approved. Please wait for admin approval to configure payment settings.</p>
-        ) : (
+        <h2>Profile Information</h2>
+        <div className="profile-grid">
           <div className="form-group">
-            <label>Khalti Merchant ID</label>
+            <label>Business Name</label>
             <input
               type="text"
-              value={khaltiMerchantId}
-              onChange={(e) => setKhaltiMerchantId(e.target.value)}
-              placeholder="Enter your Khalti merchant ID"
+              value={userInfo?.businessName || ""}
+              disabled
               className="form-control"
             />
-            <button className="primary-btn mt-2" onClick={handleUpdateMerchantId}>
-              Save
-            </button>
           </div>
-        )}
+          <div className="form-group">
+            <label>Email</label>
+            <input
+              type="email"
+              value={userInfo?.email || ""}
+              disabled
+              className="form-control"
+            />
+          </div>
+          <div className="form-group">
+            <label>Total Revenue</label>
+            <div className="revenue-display">
+              <FiDollarSign className="revenue-icon" />
+              <span>NPR {totalRevenue.toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
       </div>
     );
   };

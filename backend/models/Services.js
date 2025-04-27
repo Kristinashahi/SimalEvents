@@ -12,7 +12,7 @@ const menuSectionSchema = new mongoose.Schema({
   name: String,
   items: [{
     title: String,
-    items: [String] // Changed to store just the names as strings
+    items: [String] 
   }]
 });
 
