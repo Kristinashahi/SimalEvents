@@ -42,7 +42,7 @@ const Contact = () => {
         <div className="banner">
           <div className="item">
             <h4>Address</h4>
-            <p>Any where, Any City, 4521</p>
+            <p>Thapathali, Kathmandu</p>
           </div>
           <div className="item">
             <h4>Call Us</h4>
@@ -50,7 +50,7 @@ const Contact = () => {
           </div>
           <div className="item">
             <h4>Mail Us</h4>
-            <p>zk@gmail.com</p>
+            <p>Simalevents@gmail.com</p>
           </div>
         </div>
         <div className="banner">

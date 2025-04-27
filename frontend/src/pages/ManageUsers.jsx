@@ -1,14 +1,19 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import "bootstrap/dist/css/bootstrap.min.css";
-import { FaEdit, FaTrash, FaArrowLeft } from "react-icons/fa";
+import { FaEdit, FaTrash, FaArrowLeft, FaSearch } from "react-icons/fa";
 import { getAuthData } from "../utils/auth-utils.js";
+import "../styles/ManageUser.css";
+
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
 
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchRole, setSearchRole] = useState("all");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -20,10 +25,11 @@ const ManageUsers = () => {
 
     const fetchUsers = async () => {
       try {
-        const response = await axios.get("http://localhost:4000/admin/users", {
+        const response = await axios.get(`${API_BASE_URL}/admin/users`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUsers(response.data);
+        setFilteredUsers(response.data);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching users:", error);
@@ -38,11 +44,34 @@ const ManageUsers = () => {
     fetchUsers();
   }, [navigate]);
 
+  useEffect(() => {
+    filterUsers();
+  }, [users, searchTerm, searchRole]);
+
+  const filterUsers = () => {
+    let results = users;
+    
+    // Filter by search term
+    if (searchTerm) {
+      results = results.filter(user => 
+        user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    // Filter by role
+    if (searchRole !== "all") {
+      results = results.filter(user => user.role === searchRole);
+    }
+    
+    setFilteredUsers(results);
+  };
+
   const handleDelete = async (userId) => {
     if (window.confirm("Are you sure you want to delete this user?")) {
       const { token } = getAuthData();
       try {
-        await axios.delete(`http://localhost:4000/admin/users/${userId}`, {
+        await axios.delete(`${API_BASE_URL}/admin/users/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUsers(users.filter(user => user._id !== userId));
@@ -53,75 +82,109 @@ const ManageUsers = () => {
     }
   };
 
-  if (loading) return <div className="text-center mt-5">Loading...</div>;
-  if (error) return <div className="alert alert-danger mt-3">{error}</div>;
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="spinner"></div>
+        <p>Loading users...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="error-message">{error}</div>;
+  }
 
   return (
     
-    <div className="container-fluid mt-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>Manage Users</h2>
+    <div className="manage-users-container">
+      
+      <div className="header-section">
+        <h1>User Management</h1>
         <button 
-          className="btn btn-primary" 
+          className="back-button"
           onClick={() => navigate(-1)}
         >
-          <FaArrowLeft className="me-2" /> Back to Dashboard
+          <FaArrowLeft className="icon" /> Back to Dashboard
         </button>
       </div>
 
-      <div className="card">
-        <div className="card-header bg-primary text-white">
-          <h5 className="mb-0">Users List</h5>
+      <div className="search-filters">
+        <div className="search-bar">
+          <FaSearch className="search-icon" />
+          <input
+            type="text"
+            placeholder="Search users..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
         
-        <div className="card-body">
-          <div className="table-responsive">
-            <table className="table table-striped table-hover">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                  
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.length > 0 ? (
-                  users.map(user => (
-                    <tr key={user._id}>
-                      <td>{user.name}</td>
-                      <td>{user.email}</td>
-                      <td>
-                        <span className={`badge ${user.role === 'admin' ? 'bg-danger' : user.role === 'vendor' ? 'bg-success' : 'bg-info'}`}>
-                          {user.role}
-                        </span>
-                      </td>
-                      
-                      <td>
+        <div className="role-filter">
+          <select
+            value={searchRole}
+            onChange={(e) => setSearchRole(e.target.value)}
+          >
+            <option value="all">All Roles</option>
+            <option value="user">User</option>
+            <option value="vendor">Vendor</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="users-table-container">
+        <div className="table-header">
+          <h3>Users List</h3>
+          <span className="count-badge">{filteredUsers.length} users</span>
+        </div>
+        
+        <div className="table-wrapper">
+          <table className="users-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUsers.length > 0 ? (
+                filteredUsers.map(user => (
+                  <tr key={user._id}>
+                    <td>{user.name}</td>
+                    <td>{user.email}</td>
+                    <td>
+                      <span className={`role-badge ${user.role}`}>
+                        {user.role}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="action-buttons">
                         <button 
-                          className="btn btn-sm btn-warning me-2"
+                          className="edit-button"
                           onClick={() => navigate(`/edituser/${user._id}`)}
                         >
                           <FaEdit /> Edit
                         </button>
                         <button 
-                          className="btn btn-sm btn-danger"
+                          className="delete-button"
                           onClick={() => handleDelete(user._id)}
                         >
                           <FaTrash /> Delete
                         </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="5" className="text-center">No users found</td>
+                      </div>
+                    </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                ))
+              ) : (
+                <tr className="no-data">
+                  <td colSpan="4">No users found</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

@@ -69,7 +69,7 @@ const AddService = () => {
     {
       packageType: "diamond",
       name: "Diamond Package",
-      basePrice: 0,
+      basePrice: "",
       description: "Premium package with wide selection",
       minGuests: 50,
       maxGuests: 500,
@@ -370,6 +370,7 @@ const AddService = () => {
     if (!formData.description.trim()) errors.description = "Description is required";
     if (!formData.price) errors.price = "Price is required";
     if (isNaN(formData.price)) errors.price = "Price must be a number";
+    if (formData.price <= 0) errors.price = "Price must be greater than 0";
     if (!formData.duration) errors.duration = "Duration is required";
     if (formData.category === "venue" && !formData.capacity) {
       errors.capacity = "Capacity is required for venues";
@@ -425,8 +426,13 @@ const AddService = () => {
     e.preventDefault();
     if (!validateForm()) {
       toast.error("Please fix form errors");
+      
       return;
+
+      
+  
     }
+    
   
     try {
       const { token, userInfo } = getAuthData();
@@ -731,7 +737,7 @@ const AddService = () => {
                       value={formData.price}
                       onChange={handleChange}
                       step="0.01"
-                      min="0"
+                      
                     />
                     {formErrors.price && 
                       <div className="invalid-feedback">{formErrors.price}</div>}

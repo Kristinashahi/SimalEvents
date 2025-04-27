@@ -20,6 +20,7 @@ const userSchema = new mongoose.Schema({
     enum: ["user", "vendor", "admin"],
     default: "user",
   },
+  resetToken: { type: String },
   // Vendor specific fields
   businessName: {
     type: String,
@@ -67,6 +68,13 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId, 
     ref: "Service" 
   }],
+  tokens: [{
+    token: {
+      type: String,
+      required: true
+    }
+  }]
+
 });
 
 // Hash password before saving

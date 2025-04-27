@@ -29,6 +29,9 @@ import ManageAvailability from "./pages/ManageAvailibality.jsx";
 import ServiceDetails from "../components/ServiceDetails.jsx";
 import BookingForm from "../components/BookingForm.jsx";
 import TopServicesTable from "./pages/TopServicesTable.jsx";
+import Success from "./pages/Success.jsx";
+import ManageBookings from "./pages/ManageBookings.jsx";
+
 import "bootstrap/dist/css/bootstrap.min.css";
 
 
@@ -36,7 +39,7 @@ const AppContent = () => {
   const location = useLocation(); 
 
   // Define paths where Navbar and Footer should NOT appear
-  const hideNavbarFooter = ["/signin", "/signup", "/admin-dashboard", "/manageusers", "/vendordashboard", "/managevendor", "/user-dashboard"].includes(location.pathname);
+  const hideNavbarFooter = ["/signin", "/signup", "/admin-dashboard", "/manageusers", "/vendordashboard", "/managevendor", "/user-dashboard", "/managebookings"].includes(location.pathname);
 
   return (
     <>
@@ -57,6 +60,7 @@ const AppContent = () => {
         <Route path="/serviceDetails/:id" element={<ServiceDetails />} />
         <Route path="/TopServicesTable" element={<TopServicesTable />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        
         
         {/* Protected Routes */}
         <Route 
@@ -79,6 +83,8 @@ const AppContent = () => {
         <Route path="/managevendor" element={<ManageVendor/>}/>
         <Route path="/manageservices" element={<ManageServices/>}/>
         <Route path="/user-dashboard" element={<UserDashboard/>}/>
+        <Route path="/managebookings" element={<ManageBookings />} />
+        <Route path="/payment-success" element={<Success/>}/>
       </Routes>
       {!hideNavbarFooter && <Footer />}
     </>

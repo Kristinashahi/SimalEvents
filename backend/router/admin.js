@@ -75,6 +75,44 @@ router.delete("/users/:id", auth, async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 });
+// Get all vendors (for management)
+router.get("/vendors", auth, async (req, res) => {
+  // Check if user is admin
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ msg: "Not authorized as admin" });
+  }
+
+  try {
+    const vendors = await User.find({ 
+      role: "vendor"
+    }).select("-password");
+    
+    res.json(vendors);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+router.get("/bookings", auth, async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ msg: "Not authorized as admin" });
+  }
+
+  try {
+    const bookings = await Booking.find({
+      status: { $in: ["confirmed", "paid"] },
+      "payment.status": "completed",
+    })
+      .populate("service", "name")
+      .populate("vendor", "businessName")
+      .select("_id date totalPrice commission service vendor status");
+
+    res.json(bookings);
+  } catch (err) {
+    console.error("Error fetching bookings:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
 
 // Get all pending vendor applications
 router.get("/pending-vendors", auth, async (req, res) => {
@@ -96,24 +134,6 @@ router.get("/pending-vendors", auth, async (req, res) => {
   }
 });
 
-// Get all vendors (for management)
-router.get("/vendors", auth, async (req, res) => {
-  // Check if user is admin
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ msg: "Not authorized as admin" });
-  }
-
-  try {
-    const vendors = await User.find({ 
-      role: "vendor"
-    }).select("-password");
-    
-    res.json(vendors);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ msg: "Server error" });
-  }
-});
 
 // Approve a vendor application
 router.put("/approve-vendor/:id", auth, async (req, res) => {
@@ -274,6 +294,7 @@ router.get("/top-services", auth, async (req, res) => {
  res.status(500).json({ msg: "Server error" });
   }
 });
+
 
 
 

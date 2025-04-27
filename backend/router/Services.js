@@ -14,6 +14,8 @@ router.post("/", auth, upload.array('images', 5), async (req, res) => {
       return res.status(403).json({ msg: "Only vendors can create services" });
     }
 
+   
+
     // Check if vendor already has a service
     const existingService = await Service.findOne({ vendor: req.user.id });
     if (existingService) {

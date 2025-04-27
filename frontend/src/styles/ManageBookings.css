@@ -1,0 +1,39 @@
+
+/* src/styles/ManageBookings.css */
+.table th {
+  font-weight: 600;
+  color: #333;
+}
+
+.table .badge {
+  font-size: 0.85rem;
+  padding: 0.4em 0.8em;
+}
+
+.table-responsive {
+  max-height: 500px; /* Scrollable table */
+  overflow-y: auto;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.btn-outline-primary {
+  font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+  .table {
+    font-size: 0.9rem;
+  }
+
+  .btn-outline-primary {
+    padding: 0.25rem 0.5rem;
+  }
+
+  .card-header select {
+    width: 120px;
+  }
+}

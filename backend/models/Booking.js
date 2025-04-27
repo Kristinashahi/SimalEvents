@@ -1,10 +1,11 @@
+// models/Booking.js
 import mongoose from "mongoose";
 
 const selectedMenuItemSchema = new mongoose.Schema({
   menuItemId: String,
   quantity: Number,
   isOptional: Boolean,
-  isSectionItem: Boolean, // Already present
+  isSectionItem: Boolean,
 });
 
 const bookingSchema = new mongoose.Schema({
@@ -48,13 +49,13 @@ const bookingSchema = new mongoose.Schema({
   },
   specialRequests: String,
   payment: {
-    paymentId: String, // Khalti transaction ID
+    paymentId: String, // eSewa product ID
     status: {
       type: String,
       enum: ["pending", "completed", "failed", "refunded"],
       default: "pending",
     },
-    amount: Number, // Amount in paisa (Khalti uses paisa)
+    amount: Number, // Amount in NPR
     paidAt: Date,
   },
   createdAt: {
@@ -65,7 +66,8 @@ const bookingSchema = new mongoose.Schema({
     type: Number,
     default: function () {
       return this.totalPrice * 0.05; // 5% commission
-    }},
+    },
+  },
 });
 
 bookingSchema.index({

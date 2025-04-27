@@ -1,0 +1,409 @@
+/* Base Styles */
+:root {
+    --navy: #0a1a35;
+    --navy-light: #1a2a4a;
+    --gold: #d4af37;
+    --gold-light: #e8c874;
+    --white: #ffffff;
+    --off-white: #f8fafc;
+    --gray: #e2e8f0;
+    --text-dark: #1e293b;
+    --text-light: #64748b;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error: #ef4444;
+    --info: #3b82f6;
+  }
+  
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  
+  /* Loading State */
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-color: var(--off-white);
+  }
+  
+  .spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(212, 175, 55, 0.2);
+    border-top: 4px solid var(--gold);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  .error-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    padding: 2rem;
+  }
+  
+  .error-message {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--error);
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    border-left: 4px solid var(--error);
+    max-width: 600px;
+    text-align: center;
+  }
+  
+  .retry-button {
+    background-color: var(--navy);
+    color: var(--white);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .retry-button:hover {
+    background-color: var(--navy-light);
+  }
+  
+  /* Main Container */
+  .manage-services-container {
+    padding: 2rem;
+    background-color: var(--off-white);
+    min-height: 100vh;
+  }
+  
+  .header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+  }
+  
+  .header-section h1 {
+    color: var(--navy);
+    font-size: 1.8rem;
+  }
+  
+  .back-button {
+    background-color: var(--navy);
+    color: var(--white);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .back-button:hover {
+    background-color: var(--navy-light);
+  }
+  
+  .back-button .icon {
+    font-size: 0.9rem;
+  }
+  
+  /* Search and Filters */
+  .search-filters {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .search-bar {
+    flex: 1;
+    position: relative;
+  }
+  
+  .search-bar input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    border: 1px solid var(--gray);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+  }
+  
+  .search-bar input:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+  }
+  
+  .search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-light);
+  }
+  
+  .status-filter select {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--gray);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    background-color: var(--white);
+    cursor: pointer;
+    min-width: 150px;
+  }
+  
+  .status-filter select:focus {
+    outline: none;
+    border-color: var(--gold);
+  }
+  
+  /* Services Table */
+  .services-table-container {
+    background-color: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+  }
+  
+  .table-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--gray);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .table-header h3 {
+    color: var(--navy);
+    font-size: 1.2rem;
+  }
+  
+  .count-badge {
+    background-color: var(--navy-light);
+    color: var(--white);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+  
+  .table-wrapper {
+    overflow-x: auto;
+  }
+  
+  .services-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .services-table th {
+    background-color: var(--off-white);
+    color: var(--navy);
+    font-weight: 600;
+    text-align: left;
+    padding: 1rem 1.5rem;
+    white-space: nowrap;
+  }
+  
+  .services-table td {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--gray);
+    color: var(--text-dark);
+  }
+  
+  .services-table tr:last-child td {
+    border-bottom: none;
+  }
+  
+  .services-table tr:hover td {
+    background-color: rgba(212, 175, 55, 0.05);
+  }
+  
+  .capitalize {
+    text-transform: capitalize;
+  }
+  
+  .no-data {
+    text-align: center;
+    color: var(--text-light);
+  }
+  
+  /* Status Select */
+  .status-select {
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    outline: none;
+    transition: all 0.2s;
+  }
+  
+  .status-select.active {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+  }
+  
+  .status-select.inactive {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--error);
+  }
+  
+  .status-select.pending {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+  }
+  
+  .status-select:hover {
+    opacity: 0.9;
+  }
+  
+  /* Action Buttons */
+  .action-buttons {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .edit-button, .delete-button {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .edit-button {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: var(--info);
+    border: none;
+  }
+  
+  .edit-button:hover {
+    background-color: rgba(59, 130, 246, 0.2);
+  }
+  
+  .delete-button {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--error);
+    border: none;
+  }
+  
+  .delete-button:hover {
+    background-color: rgba(239, 68, 68, 0.2);
+  }
+  
+  /* Pagination */
+  .pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.5rem;
+  }
+  
+  .pagination-button {
+    background-color: var(--navy);
+    color: var(--white);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .pagination-button:hover:not(:disabled) {
+    background-color: var(--navy-light);
+  }
+  
+  .pagination-button:disabled {
+    background-color: var(--gray);
+    cursor: not-allowed;
+  }
+  
+  .page-numbers {
+    display: flex;
+    gap: 0.25rem;
+  }
+  
+  .page-number {
+    background-color: transparent;
+    color: var(--navy);
+    border: 1px solid var(--gray);
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .page-number:hover {
+    background-color: var(--off-white);
+  }
+  
+  .page-number.active {
+    background-color: var(--navy);
+    color: var(--white);
+    border-color: var(--navy);
+  }
+  
+  /* Responsive Adjustments */
+  @media (max-width: 768px) {
+    .manage-services-container {
+      padding: 1.5rem;
+    }
+    
+    .header-section {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    
+    .search-filters {
+      flex-direction: column;
+    }
+    
+    .action-buttons {
+      flex-direction: column;
+    }
+    
+    .edit-button, .delete-button {
+      width: 100%;
+      justify-content: center;
+    }
+    
+    .services-table th, 
+    .services-table td {
+      padding: 0.75rem;
+      font-size: 0.9rem;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .pagination-container {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .page-numbers {
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+  }

@@ -7,16 +7,17 @@ import multer from "multer";
 import path from "path";
 import { auth } from "../middleware/auth.js";
 import fs from "fs";
+import nodemailer from "nodemailer";
 import Booking from "../models/Booking.js";
 import Service from "../models/Services.js";
-
+import { sendPasswordResetEmail } from "../controller/email.js";
 
 const router = express.Router();
 
 // Configure multer for file storage
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadDir = 'uploads/';
+    const uploadDir = 'Uploads/';
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -43,6 +44,9 @@ const upload = multer({
   fileFilter: fileFilter
 });
 
+
+
+// CORS middleware
 router.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", process.env.FRONTEND_URL || "http://localhost:5173");
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
@@ -56,9 +60,9 @@ router.post(
   "/register",
   upload.single('document'),
   [
-    body("name").notEmpty(),
-    body("email").isEmail(),
-    body("password").isLength({ min: 6 }),
+    body("name").notEmpty().withMessage("Name is required"),
+    body("email").isEmail().withMessage("Valid email is required"),
+    body("password").isLength({ min: 6 }).withMessage("Password must be at least 6 characters long"),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -85,7 +89,6 @@ router.post(
         userData.serviceCategories = req.body.serviceCategories;
         userData.contactPerson = req.body.contactPerson;
         userData.vendorStatus = "pending";
-        
         if (req.file) {
           userData.documentUrl = req.file.path;
         }
@@ -110,7 +113,10 @@ router.post(
 // **LOGIN**
 router.post(
   "/login",
-  [body("email").isEmail(), body("password").exists()],
+  [
+    body("email").isEmail().withMessage("Valid email is required"),
+    body("password").exists().withMessage("Password is required"),
+  ],
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
@@ -139,44 +145,122 @@ router.post(
       );
       res.json({ token });
     } catch (err) {
+      console.error("Login error:", err);
       res.status(500).json({ msg: "Server error" });
     }
   }
 );
 
-// Vendor register
-router.post("/register-vendor", auth, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    
-    if (!user) {
-      return res.status(404).json({ msg: "User not found" });
-    }
-    
-    user.role = "vendor";
-    user.businessName = req.body.businessName;
-    user.address = req.body.address;
-    user.phoneNumber = req.body.phoneNumber;
-    user.description = req.body.description;
-    user.website = req.body.website;
-    user.taxId = req.body.taxId;
-    user.serviceCategories = req.body.serviceCategories;
-    user.contactPerson = req.body.contactPerson;
-    user.vendorStatus = "pending";
-    
-    if (req.file) {
-      user.documentUrl = req.file.path;
-    }
-    
-    await user.save();
-    
-    res.json({ msg: "Vendor registration submitted for approval", user });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ msg: "Server error" });
-  }
-});
+// **FORGOT PASSWORD**
+router.post(
+  "/forgot-password",
+  [
+    body("email").isEmail().withMessage("Valid email is required"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
+    const { email } = req.body;
+
+    try {
+      const user = await User.findOne({ email });
+      if (!user) return res.status(404).json({ msg: "No user found with this email id!" });
+
+      // Generate reset token
+      const resetToken = jwt.sign(
+        { id: user.id, email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" }
+      );
+
+      // Send email with reset link
+      const resetLink = `${process.env.FRONTEND_URL || "http://localhost:5173"}/reset-password?token=${resetToken}`;
+      await sendPasswordResetEmail(email, resetLink);
+
+      res.json({ msg: "Password reset link sent to your email!" });
+    } catch (err) {
+      console.error("Forgot password error:", err);
+      res.status(500).json({ msg: "Failed to send reset link", error: err.message });
+    }
+  }
+);
+
+// **RESET PASSWORD**
+router.post(
+  "/reset-password",
+  [
+    body("token").notEmpty().withMessage("Reset token is required"),
+    body("newPassword")
+      .isLength({ min: 6 })
+      .withMessage("New password must be at least 6 characters long"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+    const { token, newPassword } = req.body;
+
+    try {
+      // Verify reset token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findOne({ email: decoded.email });
+      if (!user) return res.status(404).json({ msg: "User not found" });
+
+      // Update password
+      user.password = newPassword; 
+      await user.save({ validateModifiedOnly: true });
+
+      res.json({ msg: "Password reset successful!" });
+    } catch (err) {
+      console.error("Reset password error:", err);
+      if (err.name === "TokenExpiredError") {
+        return res.status(400).json({ msg: "Reset token has expired" });
+      }
+      res.status(400).json({ msg: "Invalid or expired token" });
+    }
+  }
+);
+
+// **VENDOR REGISTER**
+router.post(
+  "/register-vendor",
+  auth,
+  upload.single('document'),
+  async (req, res) => {
+    try {
+      const user = await User.findById(req.user.id);
+      
+      if (!user) {
+        return res.status(404).json({ msg: "User not found" });
+      }
+      
+      user.role = "vendor";
+      user.businessName = req.body.businessName;
+      user.address = req.body.address;
+      user.phoneNumber = req.body.phoneNumber;
+      user.description = req.body.description;
+      user.website = req.body.website;
+      user.taxId = req.body.taxId;
+      user.serviceCategories = req.body.serviceCategories;
+      user.contactPerson = req.body.contactPerson;
+      user.vendorStatus = "pending";
+      
+      if (req.file) {
+        user.documentUrl = req.file.path;
+      }
+      
+      await user.save();
+      
+      res.json({ msg: "Vendor registration submitted for approval", user });
+    } catch (err) {
+      console.error("Vendor registration error:", err);
+      res.status(500).json({ msg: "Server error" });
+    }
+  }
+);
+
+// **UPDATE VENDOR PROFILE**
 router.put("/vendor/profile", auth, async (req, res) => {
   if (req.user.role !== "vendor") {
     return res.status(403).json({ msg: "Only vendors can update profile" });
@@ -190,11 +274,12 @@ router.put("/vendor/profile", auth, async (req, res) => {
     ).select("-password");
     res.json(user);
   } catch (err) {
+    console.error("Vendor profile update error:", err);
     res.status(500).json({ msg: "Server error" });
   }
 });
 
-// Get user profile
+// **GET USER PROFILE**
 router.get("/profile", auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
@@ -203,11 +288,12 @@ router.get("/profile", auth, async (req, res) => {
     }
     res.json(user);
   } catch (err) {
-    console.error(err);
+    console.error("Profile fetch error:", err);
     res.status(500).json({ msg: "Server error" });
   }
 });
 
+// **UPDATE USER PROFILE**
 router.put("/profile", auth, async (req, res) => {
   try {
     const { khaltiMerchantId } = req.body;
@@ -226,13 +312,13 @@ router.put("/profile", auth, async (req, res) => {
       msg: "Profile updated successfully",
       user,
     });
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    console.error("Profile update error:", err);
     res.status(500).json({ msg: "Server error" });
   }
 });
 
-// Get user bookings
+// **GET USER BOOKINGS**
 router.get("/bookings", auth, async (req, res) => {
   try {
     const bookings = await Booking.find({ user: req.user.id })
@@ -241,12 +327,12 @@ router.get("/bookings", auth, async (req, res) => {
       .sort({ date: -1 });
     res.json(bookings);
   } catch (err) {
-    console.error(err);
+    console.error("Bookings fetch error:", err);
     res.status(500).json({ msg: "Server error" });
   }
 });
 
-// Change password
+// **CHANGE PASSWORD**
 router.post("/change-password", auth, async (req, res) => {
   const { currentPassword, newPassword, confirmNewPassword } = req.body;
 
@@ -267,86 +353,9 @@ router.post("/change-password", auth, async (req, res) => {
     
     res.json({ msg: "Password updated successfully" });
   } catch (err) {
-    console.error(err);
+    console.error("Change password error:", err);
     res.status(500).json({ msg: "Server error" });
   }
 });
-/*
-// Forgot Password
-router.post('/forgot-password', async (req, res) => {
-  const { email } = req.body;
-
-  // Basic validation
-  if (!email || !email.includes('@')) {
-    return res.status(400).json({ msg: "Valid email is required" });
-  }
-
-  try {
-    const user = await User.findOne({ email });
-    
-    // Always return success to prevent email enumeration
-    if (!user) {
-      return res.json({ msg: "If this email exists, a reset link has been sent" });
-    }
-
-    // Generate JWT token
-    const resetToken = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
-    );
-
-    // Save to database
-    user.resetToken = resetToken;
-    await user.save();
-
-    // Send email
-    await sendPasswordResetEmail(email, resetToken);
-    
-    res.json({ msg: "Password reset link sent to your email!" });
-  } catch (error) {
-    console.error('Password reset error:', error);
-    
-    // Specific error for email failures
-    if (error.message.includes('Failed to send email')) {
-      return res.status(500).json({ 
-        msg: "Failed to send email. Please try again later.",
-        error: error.message 
-      });
-    }
-    
-    res.status(500).json({ msg: "Server error" });
-  }
-});
-
-// Reset Password
-router.post('/reset-password', async (req, res) => {
-  const { token, newPassword } = req.body;
-
-  try {
-    if (!token || !newPassword) {
-      return res.status(400).json({ msg: "Token and new password are required" });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    const user = await User.findById(decoded.id);
-    if (!user || user.resetToken !== token) {
-      return res.status(400).json({ msg: "Invalid or expired token" });
-    }
-
-    user.password = newPassword;
-    user.resetToken = undefined;
-    await user.save();
-
-    res.json({ msg: "Password updated successfully!" });
-  } catch (error) {
-    console.error("Reset password error:", error);
-    if (error.name === 'TokenExpiredError') {
-      return res.status(400).json({ msg: "Token expired" });
-    }
-    res.status(500).json({ msg: "Server error" });
-  }
-});*/
 
 export default router;
